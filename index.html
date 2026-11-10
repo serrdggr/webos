@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WebOS</title>
+<style>
+  :root { --wall-a: #1d2b64; --wall-b: #5b3a8c; --wall-c: #f2845c; --text: #fff;
+    --win-bg: #f4f5f7; --win-text: #1c1c21; --card: #fff; --line: #ececf0; --hover: #f0f1f4; --muted: #8a8d96; --head: #607d8b; }
+  .phone[data-theme="dark"] { --win-bg: #121214; --win-text: #ececf1; --card: #1e1e22; --line: #2c2c32; --hover: #28282e; --muted: #9a9ca6; --head: #2b2f36; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body { display: grid; place-items: center; background: #0d0d12; color: var(--text); font-family: "Roboto", "Segoe UI", system-ui, sans-serif; }
+  .phone {
+    position: relative; overflow: hidden; display: flex; flex-direction: column;
+    width: min(100vw, 390px); height: min(100dvh, 800px); border-radius: 36px;
+    background: linear-gradient(170deg, var(--wall-a) 0%, var(--wall-b) 55%, var(--wall-c) 100%);
+    box-shadow: 0 0 0 8px #1b1b22, 0 30px 80px rgba(0,0,0,.6);
+  }
+  @media (max-width: 420px) { .phone { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; } }
+  .status { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px 0; font-size: 13px; font-weight: 500; }
+  .status .icons { display: flex; gap: 6px; align-items: center; }
+  .status svg { width: 16px; height: 16px; fill: currentColor; }
+  .clock { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 80px; }
+  .time { font-size: 96px; font-weight: 200; letter-spacing: -2px; line-height: 1; }
+  .date { margin-top: 10px; font-size: 17px; opacity: .85; }
+  .phone-num { margin-top: 8px; font-size: 15px; letter-spacing: 1px; opacity: .75; font-variant-numeric: tabular-nums; }
+  .apps { padding: 0 22px 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 8px; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+  .icon { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+  .icon svg { width: 30px; height: 30px; fill: #fff; }
+  .app:focus-visible, .back:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 12px; }
+  .window { position: absolute; inset: 0; z-index: 5; flex-direction: column; background: var(--win-bg); color: var(--win-text); display: none; }
+  .window.open { display: flex; }
+  .window header { display: flex; align-items: center; gap: 14px; padding: 40px 16px 14px; background: var(--head); color: #fff; font-size: 20px; font-weight: 500; }
+  .back { background: none; border: 0; color: inherit; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; }
+  .back svg { width: 24px; height: 24px; fill: currentColor; }
+  .window .body { flex: 1; padding: 20px; overflow: auto; }
+  .list { background: var(--card); border-radius: 16px; overflow: hidden; }
+  .row { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 16px 18px; background: none; border: 0; border-bottom: 1px solid var(--line); color: inherit; font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+  .row:last-child { border-bottom: 0; }
+  .row:hover { background: var(--hover); }
+  .row svg { width: 20px; height: 20px; fill: var(--muted); }
+  .row .check { visibility: hidden; fill: currentColor; }
+  .row[aria-checked="true"] .check { visibility: visible; }
+  .section-title { margin: 0 4px 10px; font-size: 14px; color: var(--muted); }
+  .walls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .wall { position: relative; height: 150px; border: 0; border-radius: 16px; cursor: pointer; color: #fff; font: inherit; font-size: 14px; font-weight: 500; text-align: left; padding: 0 0 10px 12px; display: flex; align-items: flex-end; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
+  .wall[aria-checked="true"] { outline: 3px solid var(--win-text); outline-offset: 2px; }
+  .wall .check { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; padding: 3px; border-radius: 50%; background: #fff; fill: #1c1c21; visibility: hidden; }
+  .wall[aria-checked="true"] .check { visibility: visible; }
+  .wall:focus-visible { outline: 3px solid var(--win-text); outline-offset: 2px; }
+  .store-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--card); border-radius: 16px; margin-bottom: 12px; }
+  .store-card .icon { flex: none; font-size: 26px; font-weight: 500; color: #fff; }
+  .store-card .meta { flex: 1; min-width: 0; }
+  .store-card .meta b { display: block; font-size: 16px; font-weight: 500; }
+  .store-card .meta small { color: var(--muted); font-size: 13px; }
+  .btn { border: 0; border-radius: 20px; padding: 9px 16px; background: #00a86b; color: #fff; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .btn.danger { background: transparent; color: #e53935; box-shadow: inset 0 0 0 1.5px #e53935; }
+  .btn:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
+  .calc { display: flex; flex-direction: column; padding: 12px 14px 18px; }
+  .calc-screen { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; padding: 8px 10px 18px; min-height: 0; overflow: hidden; }
+  .calc-expr { min-height: 22px; font-size: 16px; color: var(--muted); }
+  .calc-out { font-size: 56px; font-weight: 300; line-height: 1.1; max-width: 100%; overflow-wrap: anywhere; text-align: right; }
+  .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .key { height: 62px; border: 0; border-radius: 20px; background: var(--card); color: var(--win-text); font: inherit; font-size: 24px; cursor: pointer; }
+  .key:hover { background: var(--hover); }
+  .key.fn { background: var(--line); }
+  .key.op { background: #ff7043; color: #fff; }
+  .key.op:hover { background: #ff8a65; }
+  .key:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
+  .notes { display: flex; flex-direction: column; }
+  .note-list { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .note { display: block; width: 100%; text-align: left; padding: 14px 16px; border: 0; border-radius: 16px; background: var(--card); color: inherit; font: inherit; cursor: pointer; }
+  .note:hover { background: var(--hover); }
+  .note b { display: block; font-size: 16px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note span { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty { margin-top: 40px; text-align: center; color: var(--muted); }
+  .fab { position: sticky; bottom: 0; align-self: flex-end; margin-top: 14px; width: 56px; height: 56px; border: 0; border-radius: 50%; background: #f9a825; color: #fff; font-size: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+  .note-edit { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .note-bar { display: flex; justify-content: space-between; }
+  .note-edit textarea { flex: 1; min-height: 200px; resize: none; border: 0; border-radius: 16px; padding: 16px; background: var(--card); color: inherit; font: inherit; font-size: 16px; line-height: 1.5; }
+  .note-edit textarea:focus-visible, .fab:focus-visible, .note:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
+  .wx-city { width: 100%; padding: 12px 14px; border: 0; border-radius: 14px; background: var(--card); color: inherit; font: inherit; font-size: 16px; }
+  .wx-now { text-align: center; padding: 18px 0 22px; }
+  .wx-now .ico { font-size: 60px; line-height: 1.1; }
+  .wx-now .big { font-size: 72px; font-weight: 200; line-height: 1; }
+  .wx-now .lbl { margin-top: 6px; color: var(--muted); font-size: 16px; }
+  .wx-row { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .wx-row:last-child { border-bottom: 0; }
+  .wx-row .d { flex: 1; } .wx-row .i { font-size: 22px; } .wx-row .t { min-width: 70px; text-align: right; }
+  .wx-row .t small { color: var(--muted); }
+  .wx-loc { text-align: center; color: var(--muted); font-size: 16px; padding-top: 4px; }
+  .body.browser { padding: 0; display: flex; flex-direction: column; }
+  .br-bar { display: flex; gap: 6px; padding: 8px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .br-b { flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--hover); color: inherit; font-size: 20px; cursor: pointer; }
+  .br-b:disabled { opacity: .35; cursor: default; }
+  .br-b:focus-visible, .br-url:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
+  .br-url { flex: 1; min-width: 0; border: 0; border-radius: 18px; padding: 0 14px; background: var(--hover); color: inherit; font: inherit; font-size: 15px; }
+  .br-home { padding: 16px; overflow: auto; }
+  .br-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+  .br-note { padding: 8px 12px; font-size: 12px; color: var(--muted); text-align: center; }
+  .yw-add { display: flex; gap: 8px; margin-bottom: 14px; }
+  .yw-in { flex: 1; min-width: 0; height: 40px; border: 0; border-radius: 20px; padding: 0 14px; background: var(--card); color: inherit; font: inherit; font-size: 15px; }
+  .yw-in:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
+  .yw-player { display: flex; flex-direction: column; gap: 12px; }
+  .yw-player iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 14px; background: #000; }
+  .yw-title { font-size: 17px; font-weight: 500; }
+  [hidden] { display: none !important; }
+  .nav { position: relative; z-index: 6; display: flex; justify-content: center; padding: 6px 0 12px; }
+  .nav i { width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.7); }
+</style>
+</head>
+<body>
+  <main class="phone" aria-label="Ekran główny">
+    <div class="status">
+      <span id="statusTime">--:--</span>
+      <span class="icons" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 18.5l3.5-3.6a5 5 0 0 0-7 0L12 18.5zM12 6C8.4 6 5.2 7.4 2.8 9.7l1.8 1.9C6.6 9.7 9.2 8.6 12 8.6s5.4 1.1 7.4 3l1.8-1.9C18.8 7.4 15.6 6 12 6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M17 5h-1V3h-4v2H7a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/></svg>
+        <span id="battery">100%</span>
+      </span>
+    </div>
+    <section class="clock">
+      <div class="time" id="time">--:--</div>
+      <div class="date" id="date"></div>
+      <div class="phone-num" id="phoneNum" aria-live="polite">Nr tel.: …</div>
+    </section>
+    <section class="apps">
+      <button class="app" data-open="win-settings">
+        <div class="icon" style="background:#607d8b"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.8 1.7 1l.4 2.6h4l.4-2.6c.6-.2 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>
+        <span>Ustawienia</span>
+      </button>
+      <button class="app" data-open="win-store">
+        <div class="icon" style="background:#00a86b"><svg viewBox="0 0 24 24"><path d="M6 3.5l14 8.5-14 8.5z"/></svg></div>
+        <span>SKLEPHEJ</span>
+      </button>
+    </section>
+
+    <div class="window" id="win-settings" role="dialog" aria-label="Ustawienia" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-settings" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Ustawienia</span>
+      </header>
+      <div class="body">
+        <div class="list">
+          <button class="row" data-open="win-display"><span>Ekran</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+          <button class="row" data-open="win-wallpaper"><span>Tapety</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="window" id="win-display" role="dialog" aria-label="Ekran" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-display" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Ekran</span>
+      </header>
+      <div class="body">
+        <p class="section-title">Motyw</p>
+        <div class="list" role="radiogroup" aria-label="Motyw">
+          <button class="row" role="radio" data-theme-set="light" aria-checked="true"><span>Jasny</span><svg class="check" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
+          <button class="row" role="radio" data-theme-set="dark" aria-checked="false"><span>Ciemny</span><svg class="check" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="window" id="win-wallpaper" role="dialog" aria-label="Tapety" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-wallpaper" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Tapety</span>
+      </header>
+      <div class="body">
+        <div class="walls" id="walls" role="radiogroup" aria-label="Tapeta"></div>
+      </div>
+    </div>
+
+    <div class="window" id="win-store" role="dialog" aria-label="SKLEPHEJ" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-store" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>SKLEPHEJ</span>
+      </header>
+      <div class="body">
+        <p class="section-title">Aplikacje</p>
+        <div id="storeList"></div>
+      </div>
+    </div>
+
+    <div class="nav" id="navPill"><i></i></div>
+  </main>
+<script>
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  const timeEl = document.getElementById('time');
+  const statusEl = document.getElementById('statusTime');
+  const dateEl = document.getElementById('date');
+  function tick() {
+    const now = new Date();
+    const hm = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+    timeEl.textContent = hm;
+    statusEl.textContent = hm;
+    const d = now.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+    dateEl.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+  }
+  tick();
+  setInterval(tick, 1000);
+  if (navigator.getBattery) {
+    navigator.getBattery().then(b => {
+      const show = () => document.getElementById('battery').textContent = Math.round(b.level * 100) + '%';
+      show(); b.addEventListener('levelchange', show);
+    });
+  }
+
+  /* ---------- Numer telefonu przypisany do IP ---------- */
+  // Ten sam adres IP zawsze daje ten sam numer (hash IP -> 600-001 … 600-999).
+  const numEl = document.getElementById('phoneNum');
+  // Tutaj wpisujesz własne przypisania: 'adres IP': 'numer'
+  const IP_NUMBERS = {
+    // '83.12.34.56': '600-001',
+    // '2a02:1234:abcd::1': '600-002',
+  };
+  function ipToNumber(ip) {
+    if (IP_NUMBERS[ip]) return IP_NUMBERS[ip];
+    let h = 2166136261;
+    for (const c of ip) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+    return '600-' + String((h >>> 0) % 999 + 1).padStart(3, '0');
+  }
+  async function fetchIp() {
+    const sources = [
+      ['https://api64.ipify.org?format=json', r => r.json().then(j => j.ip)],
+      ['https://api.ipify.org?format=json', r => r.json().then(j => j.ip)],
+      ['https://www.cloudflare.com/cdn-cgi/trace', r => r.text().then(t => (t.match(/^ip=(.+)$/m) || [])[1])],
+    ];
+    for (const [url, parse] of sources) {
+      try {
+        const ctl = new AbortController();
+        const to = setTimeout(() => ctl.abort(), 5000);
+        const res = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
+        clearTimeout(to);
+        if (!res.ok) continue;
+        const ip = (await parse(res) || '').trim();
+        if (ip) return ip;
+      } catch (e) { /* spróbuj następne źródło */ }
+    }
+    return null;
+  }
+  async function initPhoneNumber() {
+    const cached = store.get('phone-num', '');
+    numEl.textContent = cached ? 'Nr tel.: ' + cached : 'Nr tel.: …';
+    const ip = await fetchIp();
+    if (ip) {
+      const num = ipToNumber(ip);
+      store.set('phone-ip', ip);
+      store.set('phone-num', num);
+      numEl.textContent = 'Nr tel.: ' + num;
+      numEl.title = 'IP: ' + ip;
+    } else if (!cached) {
+      numEl.textContent = 'Nr tel.: brak sieci';
+    }
+  }
+  initPhoneNumber();
+  window.addEventListener('online', initPhoneNumber);
+
+  const setOpen = (id, on) => {
+    const w = document.getElementById(id);
+    if (!w) return;
+    w.classList.toggle('open', on);
+    w.setAttribute('aria-hidden', String(!on));
+  };
+  const closeTop = () => {
+    const open = [...document.querySelectorAll('.window.open')];
+    if (open.length) setOpen(open[open.length - 1].id, false);
+  };
+  const closeAll = () => document.querySelectorAll('.window.open').forEach(w => setOpen(w.id, false));
+  document.addEventListener('click', e => {
+    const o = e.target.closest('[data-open]');
+    if (o) return setOpen(o.dataset.open, true);
+    const c = e.target.closest('[data-close]');
+    if (c) setOpen(c.dataset.close, false);
+  });
+  const phone = document.querySelector('.phone');
+  function setTheme(t) {
+    phone.dataset.theme = t;
+    document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.themeSet === t)));
+    store.set('theme', t);
+  }
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
+  setTheme(store.get('theme') === 'dark' ? 'dark' : 'light');
+
+  const WALLS = [
+    { name: 'Zachód słońca', c: ['#1d2b64', '#5b3a8c', '#f2845c'] },
+    { name: 'Ocean',         c: ['#0f2027', '#1c6e8c', '#5fd0c9'] },
+    { name: 'Las',           c: ['#10261c', '#2d6a4f', '#b7d97a'] },
+    { name: 'Noc',           c: ['#050510', '#14143a', '#3a2f6b'] },
+    { name: 'Truskawka',     c: ['#4a1530', '#c2185b', '#ff8a9b'] },
+    { name: 'Mięta',         c: ['#16373a', '#3fa796', '#e3f6d8'] },
+  ];
+  const wallsEl = document.getElementById('walls');
+  wallsEl.innerHTML = WALLS.map((w, i) => `
+    <button class="wall" role="radio" data-wall="${i}" aria-checked="false"
+      style="background:linear-gradient(170deg, ${w.c[0]} 0%, ${w.c[1]} 55%, ${w.c[2]} 100%)">
+      ${w.name}<svg class="check" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+    </button>`).join('');
+  function setWall(i) {
+    const w = WALLS[i] || WALLS[0];
+    ['a', 'b', 'c'].forEach((k, n) => phone.style.setProperty('--wall-' + k, w.c[n]));
+    wallsEl.querySelectorAll('.wall').forEach(b => b.setAttribute('aria-checked', String(WALLS[b.dataset.wall] === w)));
+    store.set('wall', String(WALLS.indexOf(w)));
+  }
+  wallsEl.addEventListener('click', e => {
+    const b = e.target.closest('.wall');
+    if (b) setWall(Number(b.dataset.wall));
+  });
+  setWall(Number(store.get('wall', 0)) || 0);
+
+  /* ---------- Kalkulator ---------- */
+  function initCalc(root) {
+    root.innerHTML = '<div class="calc-screen"><div class="calc-expr"></div><div class="calc-out">0</div></div><div class="calc-keys"></div>';
+    const exprEl = root.querySelector('.calc-expr'), outEl = root.querySelector('.calc-out');
+    const KEYS = [
+      ['C','fn'],['±','fn'],['%','fn'],['÷','op'],
+      ['7'],['8'],['9'],['×','op'],
+      ['4'],['5'],['6'],['−','op'],
+      ['1'],['2'],['3'],['+','op'],
+      ['⌫','fn'],['0'],[','],['=','op'],
+    ];
+    root.querySelector('.calc-keys').innerHTML = KEYS.map(k => `<button class="key ${k[1] || ''}" data-k="${k[0]}">${k[0]}</button>`).join('');
+
+    let cur = '0', prev = null, op = null, fresh = false, error = false;
+    const fmt = n => isFinite(n) ? parseFloat(n.toPrecision(12)).toString() : null;
+    const show = () => {
+      outEl.textContent = error ? 'Błąd' : cur.replace('.', ',');
+      exprEl.textContent = (prev !== null && op) ? prev.replace('.', ',') + ' ' + op : '';
+    };
+    const calc = (a, b, o) => {
+      a = parseFloat(a); b = parseFloat(b);
+      if (o === '+') return a + b;
+      if (o === '−') return a - b;
+      if (o === '×') return a * b;
+      if (o === '÷') return b === 0 ? NaN : a / b;
+    };
+    const reset = () => { cur = '0'; prev = null; op = null; fresh = false; error = false; };
+    const setResult = r => {
+      const t = fmt(r);
+      if (t === null) { reset(); error = true; } else { cur = t; }
+    };
+    function press(k) {
+      if (error && k !== 'C') reset();
+      if (/^[0-9]$/.test(k)) {
+        if (fresh || cur === '0') cur = k; else if (cur.replace(/[-.]/g, '').length < 12) cur += k;
+        fresh = false;
+      } else if (k === ',') {
+        if (fresh) { cur = '0.'; fresh = false; } else if (!cur.includes('.')) cur += '.';
+      } else if (k === 'C') {
+        reset();
+      } else if (k === '⌫') {
+        if (!fresh) { cur = cur.length > 1 && !(cur.length === 2 && cur[0] === '-') ? cur.slice(0, -1) : '0'; }
+      } else if (k === '±') {
+        if (cur !== '0') cur = cur[0] === '-' ? cur.slice(1) : '-' + cur;
+      } else if (k === '%') {
+        setResult(parseFloat(cur) / 100); fresh = true;
+      } else if (k === '=') {
+        if (op !== null && prev !== null) {
+          setResult(calc(prev, cur, op));
+          prev = null; op = null; fresh = true;
+        }
+      } else {
+        if (op !== null && prev !== null && !fresh) {
+          setResult(calc(prev, cur, op));
+          if (error) { show(); return; }
+        }
+        prev = cur; op = k; fresh = true;
+      }
+      show();
+    }
+    root.querySelector('.calc-keys').addEventListener('click', e => {
+      const b = e.target.closest('.key');
+      if (b) press(b.dataset.k);
+    });
+    const onKey = e => {
+      if (!document.getElementById('win-calc')?.classList.contains('open')) return;
+      const map = { '*': '×', '/': '÷', '-': '−', '+': '+', '.': ',', ',': ',', 'Enter': '=', '=': '=', 'Backspace': '⌫', 'Delete': 'C' };
+      const k = /^[0-9]$/.test(e.key) ? e.key : map[e.key];
+      if (k) { e.preventDefault(); press(k); }
+    };
+    document.addEventListener('keydown', onKey);
+    show();
+    return () => document.removeEventListener('keydown', onKey);
+  }
+
+  /* ---------- Notatki ---------- */
+  function initNotes(root) {
+    let notes = [];
+    try { notes = JSON.parse(store.get('notes', '[]')) || []; } catch (e) {}
+    let current = null;
+    root.innerHTML =
+      '<div class="note-view"><div class="note-list"></div><button class="fab" aria-label="Nowa notatka">+</button></div>' +
+      '<div class="note-edit" hidden><div class="note-bar"><button class="btn back-list">‹ Lista</button><button class="btn danger del">Usuń</button></div>' +
+      '<textarea aria-label="Treść notatki" placeholder="Zacznij pisać…"></textarea></div>';
+    const view = root.querySelector('.note-view'), listEl = root.querySelector('.note-list');
+    const edit = root.querySelector('.note-edit'), ta = edit.querySelector('textarea');
+    const save = () => store.set('notes', JSON.stringify(notes));
+    const render = () => {
+      listEl.textContent = '';
+      if (!notes.length) {
+        const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'Brak notatek. Dotknij +, aby dodać.';
+        listEl.appendChild(p); return;
+      }
+      [...notes].sort((a, b) => b.t - a.t).forEach(n => {
+        const lines = n.text.split('\n');
+        const title = lines[0].trim() || 'Bez tytułu';
+        const rest = lines.slice(1).join(' ').trim();
+        const b = document.createElement('button'); b.className = 'note'; b.dataset.id = n.id;
+        const t = document.createElement('b'); t.textContent = title;
+        const s = document.createElement('span');
+        s.textContent = new Date(n.t).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' }) + (rest ? ' · ' + rest : '');
+        b.append(t, s); listEl.appendChild(b);
+      });
+    };
+    const open = n => {
+      current = n; ta.value = n.text;
+      view.hidden = true; edit.hidden = false; ta.focus();
+    };
+    const close = () => {
+      if (current && !current.text.trim()) notes = notes.filter(n => n !== current);
+      current = null; save(); render();
+      edit.hidden = true; view.hidden = false;
+    };
+    root.querySelector('.fab').addEventListener('click', () => {
+      const n = { id: Date.now().toString(36), text: '', t: Date.now() };
+      notes.push(n); open(n);
+    });
+    listEl.addEventListener('click', e => {
+      const b = e.target.closest('.note');
+      if (b) open(notes.find(n => n.id === b.dataset.id));
+    });
+    ta.addEventListener('input', () => { current.text = ta.value; current.t = Date.now(); save(); });
+    edit.querySelector('.back-list').addEventListener('click', close);
+    edit.querySelector('.del').addEventListener('click', () => { current.text = ''; close(); });
+    render();
+    return () => {};
+  }
+
+  /* ---------- Pogoda (dane przykładowe, bez sieci) ---------- */
+  function initWeather(root) {
+    const CITIES = { 'Gdynia': 0, 'Gdańsk': 0, 'Warszawa': 1, 'Kraków': 1.5, 'Wrocław': 1 };
+    const AVG = [-1, 0, 4, 9, 14, 17, 20, 19, 14, 9, 4, 1];
+    const LBL = { '☀️': 'Słonecznie', '⛅': 'Częściowe zachmurzenie', '☁️': 'Pochmurno', '🌦️': 'Przelotny deszcz', '🌧️': 'Deszcz', '❄️': 'Śnieg' };
+    const rnd = s => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; };
+    const city = 'Gdynia'; // jedna, domyślna lokalizacja
+    root.innerHTML = '<p class="wx-loc">📍 Twoja lokalizacja</p>' +
+      '<div class="wx-now"></div><p class="section-title">Prognoza na 5 dni</p><div class="list wx-days"></div>' +
+      '<p class="section-title" style="margin-top:14px">Dane przykładowe, generowane lokalnie.</p>';
+    const now = root.querySelector('.wx-now'), days = root.querySelector('.wx-days');
+    
+    const render = () => {
+      days.textContent = '';
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(Date.now() + i * 864e5), key = city + d.toDateString();
+        const t = Math.round(AVG[d.getMonth()] + CITIES[city] + (rnd(key + 't') - .5) * 8), r = rnd(key + 'c');
+        const ic = (t < 1 && r > .5) ? '❄️' : r < .3 ? '☀️' : r < .55 ? '⛅' : r < .75 ? '☁️' : r < .9 ? '🌦️' : '🌧️';
+        const hi = t + Math.round(rnd(key + 'h') * 3) + 1, lo = t - Math.round(rnd(key + 'l') * 3) - 1;
+        if (i === 0) {
+          now.innerHTML = '<div class="ico">' + ic + '</div><div class="big">' + t + '°</div><div class="lbl">' + LBL[ic] + '</div>';
+        }
+        const row = document.createElement('div'); row.className = 'wx-row';
+        const name = i === 0 ? 'Dziś' : d.toLocaleDateString('pl-PL', { weekday: 'long' });
+        row.innerHTML = '<span class="d"></span><span class="i">' + ic + '</span><span class="t">' + hi + '° <small>' + lo + '°</small></span>';
+        row.querySelector('.d').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+        days.appendChild(row);
+      }
+    };
+    
+    render();
+    return () => {};
+  }
+
+  /* ---------- Przeglądarka ---------- */
+  function initBrowser(root) {
+    const SITES = [['Wikipedia', 'https://pl.wikipedia.org'], ['DuckDuckGo', 'https://duckduckgo.com'], ['OpenStreetMap', 'https://www.openstreetmap.org'], ['Example', 'https://example.com']];
+    const hist = []; let pos = -1;
+    root.innerHTML = '<div class="br-bar">' +
+      '<button class="br-b" data-a="home" aria-label="Start">⌂</button>' +
+      '<button class="br-b" data-a="back" aria-label="Wstecz">‹</button>' +
+      '<button class="br-b" data-a="fwd" aria-label="Dalej">›</button>' +
+      '<input class="br-url" type="text" inputmode="url" aria-label="Adres lub wyszukiwanie" placeholder="Szukaj lub wpisz adres">' +
+      '<button class="br-b" data-a="ext" aria-label="Otwórz w nowej karcie">↗</button></div>' +
+      '<div class="br-home"><p class="section-title">Skróty</p><div class="list"></div></div>' +
+      '<iframe class="br-frame" hidden sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Strona"></iframe>' +
+      '<p class="br-note" hidden>Jeśli strona się nie wyświetla, blokuje osadzanie. Użyj ↗.</p>';
+    const url = root.querySelector('.br-url'), home = root.querySelector('.br-home'), frame = root.querySelector('.br-frame'), note = root.querySelector('.br-note');
+    const btn = a => root.querySelector('[data-a="' + a + '"]');
+    const list = home.querySelector('.list');
+    SITES.forEach(([n, u]) => { const b = document.createElement('button'); b.className = 'row'; b.dataset.u = u; b.textContent = n; list.appendChild(b); });
+    const sync = () => { btn('back').disabled = pos < 1; btn('fwd').disabled = pos >= hist.length - 1; btn('ext').disabled = pos < 0; };
+    const show = u => { frame.src = u; frame.hidden = false; note.hidden = false; home.hidden = true; url.value = u; sync(); };
+    const go = u => { hist.splice(pos + 1); hist.push(u); pos++; show(u); };
+    const norm = s => {
+      s = s.trim(); if (!s) return null;
+      if (/^https?:\/\//i.test(s)) return s;
+      if (!/\s/.test(s) && /\.[a-z]{2,}/i.test(s)) return 'https://' + s;
+      return 'https://duckduckgo.com/?q=' + encodeURIComponent(s);
+    };
+    url.addEventListener('keydown', e => { if (e.key === 'Enter') { const u = norm(url.value); if (u) go(u); } });
+    root.addEventListener('click', e => {
+      const s = e.target.closest('[data-u]'); if (s) return go(s.dataset.u);
+      const b = e.target.closest('[data-a]'); if (!b) return;
+      const a = b.dataset.a;
+      if (a === 'home') { hist.length = 0; pos = -1; frame.src = 'about:blank'; frame.hidden = true; note.hidden = true; home.hidden = false; url.value = ''; sync(); }
+      else if (a === 'back' && pos > 0) show(hist[--pos]);
+      else if (a === 'fwd' && pos < hist.length - 1) show(hist[++pos]);
+      else if (a === 'ext' && pos >= 0) window.open(hist[pos], '_blank', 'noopener');
+    });
+    sync();
+    return () => {};
+  }
+
+  /* ---------- YouWideo ---------- */
+  function initYouwideo(root) {
+    let vids = [];
+    try { vids = JSON.parse(store.get('ywvids', 'null')); } catch (e) {}
+    if (!Array.isArray(vids)) vids = [
+      { id: 'YE7VzlLtp-4', title: 'Big Buck Bunny' },
+      { id: 'jNQXAC9IVRw', title: 'Me at the zoo' },
+      { id: 'dQw4w9WgXcQ', title: 'Rick Astley – Never Gonna Give You Up' },
+      { id: '9bZkp7q19f0', title: 'PSY – Gangnam Style' },
+    ];
+    root.innerHTML = '<div class="yw-list"><div class="yw-add"><input class="yw-in" type="text" aria-label="Link do filmu" placeholder="Wklej link do filmu"><button class="btn yw-addbtn">Dodaj</button></div><div class="note-list"></div></div>' +
+      '<div class="yw-player" hidden><div class="note-bar"><button class="btn yw-back">‹ Lista</button><button class="btn yw-ext">YouTube ↗</button><button class="btn danger yw-del">Usuń</button></div>' +
+      '<iframe allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Odtwarzacz"></iframe><p class="yw-title"></p></div>';
+    const list = root.querySelector('.note-list'), lv = root.querySelector('.yw-list'), pv = root.querySelector('.yw-player');
+    const inp = root.querySelector('.yw-in'), fr = pv.querySelector('iframe'), ttl = pv.querySelector('.yw-title');
+    let cur = null;
+    const save = () => store.set('ywvids', JSON.stringify(vids));
+    const render = () => {
+      list.textContent = '';
+      if (!vids.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'Brak filmów. Wklej link powyżej.'; list.appendChild(p); return; }
+      vids.forEach(v => {
+        const b = document.createElement('button'); b.className = 'note'; b.dataset.id = v.id;
+        const t = document.createElement('b'); t.textContent = '▶ ' + v.title;
+        const s = document.createElement('span'); s.textContent = 'youtube.com/watch?v=' + v.id;
+        b.append(t, s); list.appendChild(b);
+      });
+    };
+    const play = v => { cur = v; fr.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?rel=0'; ttl.textContent = v.title; lv.hidden = true; pv.hidden = false; };
+    const stop = () => { fr.src = 'about:blank'; cur = null; pv.hidden = true; lv.hidden = false; };
+    const parse = s => {
+      s = s.trim();
+      const m = s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+      if (m) return m[1];
+      return /^[\w-]{11}$/.test(s) ? s : null;
+    };
+    const add = () => {
+      const id = parse(inp.value);
+      if (!id) { inp.value = ''; inp.placeholder = 'Nieprawidłowy link lub ID'; return; }
+      if (!vids.some(v => v.id === id)) { vids.push({ id, title: 'Film ' + id }); save(); render(); }
+      inp.value = ''; inp.placeholder = 'Wklej link do filmu';
+    };
+    root.querySelector('.yw-addbtn').addEventListener('click', add);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+    list.addEventListener('click', e => { const b = e.target.closest('.note'); if (b) play(vids.find(v => v.id === b.dataset.id)); });
+    pv.querySelector('.yw-back').addEventListener('click', stop);
+    pv.querySelector('.yw-ext').addEventListener('click', () => { if (cur) window.open('https://www.youtube.com/watch?v=' + cur.id, '_blank', 'noopener'); });
+    pv.querySelector('.yw-del').addEventListener('click', () => { const c = cur; stop(); vids = vids.filter(v => v !== c); save(); render(); });
+    render();
+    return () => {};
+  }
+
+  /* ---------- SKLEPHEJ: instalacja i odinstalowanie ---------- */
+  const APPS = {
+    calc:  { name: 'Kalkulator', cat: 'Narzędzia',      color: '#ff7043', glyph: '=', init: initCalc,  bodyClass: 'calc' },
+    notes: { name: 'Notatki',    cat: 'Produktywność', color: '#f9a825', glyph: '✎', init: initNotes, bodyClass: 'notes' },
+    weather: { name: 'Pogoda',   cat: 'Styl życia',    color: '#29b6f6', glyph: '☀', init: initWeather, bodyClass: 'weather' },
+    browser: { name: 'Przeglądarka', cat: 'Internet', color: '#5c6bc0', glyph: '◎', init: initBrowser, bodyClass: 'browser' },
+    youwideo: { name: 'YouWideo', cat: 'Wideo', color: '#e53935', glyph: '▶', init: initYouwideo, bodyClass: 'yw' },
+  };
+  const BACK_SVG = '<svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>';
+  let installed = [];
+  try { installed = JSON.parse(store.get('apps', '[]')).filter(id => APPS[id]); } catch (e) {}
+  if (!installed.length && store.get('calc') === '1') installed = ['calc']; // zgodność ze starą wersją
+  const destroyers = {};
+  const storeList = document.getElementById('storeList');
+
+  function renderStore() {
+    storeList.textContent = '';
+    Object.entries(APPS).forEach(([id, a]) => {
+      const on = installed.includes(id);
+      const card = document.createElement('div'); card.className = 'store-card';
+      card.innerHTML = '<div class="icon"></div><div class="meta"><b></b><small></small></div><button class="btn"></button>';
+      const ic = card.querySelector('.icon'); ic.style.background = a.color; ic.textContent = a.glyph;
+      card.querySelector('b').textContent = a.name;
+      card.querySelector('small').textContent = a.cat;
+      const btn = card.querySelector('.btn');
+      btn.dataset.store = id;
+      btn.textContent = on ? 'Odinstaluj' : 'Zainstaluj';
+      btn.classList.toggle('danger', on);
+      btn.setAttribute('aria-label', (on ? 'Odinstaluj ' : 'Zainstaluj ') + a.name);
+      storeList.appendChild(card);
+    });
+  }
+  function mountApp(id) {
+    const a = APPS[id];
+    const appBtn = document.createElement('button');
+    appBtn.className = 'app'; appBtn.id = 'app-' + id; appBtn.dataset.open = 'win-' + id;
+    appBtn.innerHTML = '<div class="icon"></div><span></span>';
+    const ic = appBtn.querySelector('.icon');
+    ic.style.cssText = 'background:' + a.color + ';color:#fff;font-size:26px;font-weight:500';
+    ic.textContent = a.glyph;
+    appBtn.querySelector('span').textContent = a.name;
+    document.querySelector('.apps').appendChild(appBtn);
+    const w = document.createElement('div');
+    w.className = 'window'; w.id = 'win-' + id;
+    w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', a.name); w.setAttribute('aria-hidden', 'true');
+    w.innerHTML = '<header><button class="back" data-close="win-' + id + '" aria-label="Wróć">' + BACK_SVG + '</button><span></span></header><div class="body ' + a.bodyClass + '"></div>';
+    w.querySelector('header span').textContent = a.name;
+    document.getElementById('navPill').before(w);
+    destroyers[id] = a.init(w.querySelector('.body'));
+  }
+  function installApp(id) {
+    if (installed.includes(id)) return;
+    installed.push(id); mountApp(id);
+    store.set('apps', JSON.stringify(installed)); renderStore();
+  }
+  function uninstallApp(id) {
+    if (!installed.includes(id)) return;
+    setOpen('win-' + id, false);
+    if (destroyers[id]) destroyers[id]();
+    delete destroyers[id];
+    document.getElementById('win-' + id)?.remove();
+    document.getElementById('app-' + id)?.remove();
+    installed = installed.filter(x => x !== id);
+    store.set('apps', JSON.stringify(installed)); renderStore();
+  }
+  storeList.addEventListener('click', e => {
+    const b = e.target.closest('[data-store]');
+    if (!b) return;
+    const id = b.dataset.store;
+    installed.includes(id) ? uninstallApp(id) : installApp(id);
+  });
+  installed.forEach(mountApp);
+  renderStore();
+
+  document.getElementById('navPill').addEventListener('click', closeAll);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTop(); });
+</script>
+</body>
+</html>
