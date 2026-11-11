@@ -57,6 +57,12 @@
   #power[data-state="boot"] .logo { display: block; }
   #power .hint { display: none; position: absolute; left: 0; right: 0; bottom: 36px; padding: 0 24px; text-align: center; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,.6); }
   #power[data-state="off"] .hint { display: block; }
+  #power .bootinfo { display: none; position: absolute; left: 0; right: 0; bottom: 36px; padding: 0 40px; text-align: center; }
+  #power[data-state="boot"] .bootinfo { display: block; }
+  #power .status-line { font-size: 13px; color: #8a8d96; min-height: 18px; }
+  #power .brand { display: none; text-align: center; }
+  #power[data-state="boot"] .brand { display: block; }
+  #power .by { margin-top: 8px; font-size: 12px; letter-spacing: 1px; color: #fff; }
   .nav { position: relative; z-index: 6; display: flex; justify-content: center; padding: 6px 0 12px; }
   .nav i { width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.7); }
 </style>
@@ -134,7 +140,13 @@
     </div>
 
     <div id="power" data-state="boot">
-      <div class="logo">WebOS</div>
+      <div class="brand">
+        <div class="logo">WebOS</div>
+        <div class="by">by serrdggr</div>
+      </div>
+      <div class="bootinfo">
+        <div class="status-line" id="bootStatus">Ładowanie systemu…</div>
+      </div>
       <div class="hint">Aby włączyć telefon, naciśnij Ctrl + Alt + P</div>
     </div>
 
@@ -273,15 +285,25 @@
 
   /* ---------- Zasilanie i uruchamianie ---------- */
   const power = document.getElementById('power');
-  let bootTimer;
+  const bootStatus = document.getElementById('bootStatus');
+  const BOOT_STEPS = ['Ładowanie systemu…', 'Zatwierdzanie konfiguracji…', 'Uruchamianie usług…', 'Wczytywanie interfejsu…'];
+  let bootTimer, stepTimer;
   function boot() {
     closeAll();
     power.dataset.state = 'boot';
     clearTimeout(bootTimer);
-    bootTimer = setTimeout(() => { power.dataset.state = ''; }, 5000);
+    clearInterval(stepTimer);
+    let step = 0;
+    bootStatus.textContent = BOOT_STEPS[0];
+    stepTimer = setInterval(() => {
+      step = Math.min(step + 1, BOOT_STEPS.length - 1);
+      bootStatus.textContent = BOOT_STEPS[step];
+    }, 1250);
+    bootTimer = setTimeout(() => { clearInterval(stepTimer); power.dataset.state = ''; }, 5000);
   }
   function shutdown() {
     clearTimeout(bootTimer);
+    clearInterval(stepTimer);
     closeAll();
     power.dataset.state = 'off';
   }
