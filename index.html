@@ -14,7 +14,7 @@
   .phone { position: relative; overflow: hidden; display: flex; flex-direction: column; width: min(100vw, 390px); height: min(100dvh, 800px); border-radius: 36px;
     background: linear-gradient(170deg, var(--wall-a) 0%, var(--wall-b) 55%, var(--wall-c) 100%); box-shadow: 0 0 0 8px #1b1b22, 0 30px 80px rgba(0,0,0,.6); }
   @media (max-width: 420px) { .phone { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; } }
-  .status { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px 0; font-size: 13px; font-weight: 500; }
+  .status { position: relative; z-index: 16; pointer-events: none; display: flex; justify-content: space-between; align-items: center; padding: 12px 22px 0; font-size: 13px; font-weight: 500; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
   .status .icons { display: flex; gap: 6px; align-items: center; }
   .status svg { width: 16px; height: 16px; fill: currentColor; }
   .clock { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 80px; }
@@ -123,6 +123,20 @@
   #power .by { margin-top: 8px; font-size: 12px; letter-spacing: 1px; color: #fff; }
   .nav { position: relative; z-index: 6; display: flex; justify-content: center; padding: 6px 0 12px; }
   .nav i { width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.7); }
+  /* kalendarz */
+  .calnav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 18px; }
+  .calbtn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--card); color: inherit; font-size: 22px; cursor: pointer; }
+  .calbtn:hover { background: var(--hover); }
+  .calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+  .calhead { margin-bottom: 8px; font-size: 12px; color: var(--muted); }
+  .calday { position: relative; aspect-ratio: 1; border: 0; border-radius: 50%; background: var(--card); color: inherit; font: inherit; font-size: 15px; cursor: pointer; }
+  .calday:hover { background: var(--hover); }
+  .calday.today { background: var(--accent); color: #fff; }
+  .calday.has::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #e53935; }
+  .hour { display: flex; align-items: center; gap: 12px; padding: 6px 18px; border-bottom: 1px solid var(--line); }
+  .hour:last-child { border-bottom: 0; }
+  .hh { width: 46px; flex: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .note { flex: 1; min-width: 0; padding: 10px 0; border: 0; background: none; color: var(--win-text); font: inherit; font-size: 15px; outline: none; }
 </style>
 </head>
 <body>
@@ -144,6 +158,10 @@
       <button class="app" data-open="win-settings">
         <div class="icon" style="background:#607d8b"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.8 1.7 1l.4 2.6h4l.4-2.6c.6-.2 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>
         <span>Ustawienia</span>
+      </button>
+      <button class="app" data-open="win-cal">
+        <div class="icon" style="background:#e53935"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></svg></div>
+        <span>Kalendarz</span>
       </button>
     </section>
 
@@ -266,6 +284,31 @@
           <button class="row danger" id="shutdownBtn"><span>Wyłącz telefon</span></button>
         </div>
       </div>
+    </div>
+
+    <!-- KALENDARZ -->
+    <div class="window" id="win-cal" role="dialog" aria-label="Kalendarz" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-cal" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Kalendarz</span>
+      </header>
+      <div class="body">
+        <div class="calnav">
+          <button class="calbtn" id="calPrev" aria-label="Poprzedni miesiąc">‹</button>
+          <strong id="calTitle"></strong>
+          <button class="calbtn" id="calNext" aria-label="Następny miesiąc">›</button>
+        </div>
+        <div class="calgrid calhead"><span>Pn</span><span>Wt</span><span>Śr</span><span>Cz</span><span>Pt</span><span>So</span><span>Nd</span></div>
+        <div class="calgrid" id="calDays"></div>
+      </div>
+    </div>
+
+    <div class="window" id="win-day" role="dialog" aria-label="Dzień" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-day" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span id="dayTitle">Dzień</span>
+      </header>
+      <div class="body"><div class="list" id="hours"></div></div>
     </div>
 
     <!-- EKRAN BLOKADY -->
@@ -530,6 +573,49 @@
   lockNow.addEventListener('click', showLock);
   refreshSecurity();
 
+  /* ---------- Kalendarz ---------- */
+  let notes = {};
+  try { notes = JSON.parse(store.get('cal', '{}')) || {}; } catch (e) {}
+  const pad = n => String(n).padStart(2, '0');
+  const keyOf = (y, m, d) => y + '-' + pad(m + 1) + '-' + pad(d);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  let view = new Date(); view.setDate(1);
+  let selKey = '';
+
+  function renderCal() {
+    const y = view.getFullYear(), m = view.getMonth();
+    $('calTitle').textContent = cap(view.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' }));
+    const first = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+    const t = new Date(), tk = keyOf(t.getFullYear(), t.getMonth(), t.getDate());
+    let h = '<span></span>'.repeat(first);
+    for (let d = 1; d <= days; d++) {
+      const k = keyOf(y, m, d);
+      h += `<button class="calday${k === tk ? ' today' : ''}${notes[k] ? ' has' : ''}" data-day="${k}">${d}</button>`;
+    }
+    $('calDays').innerHTML = h;
+  }
+  function openDay(k) {
+    selKey = k;
+    const [y, m, d] = k.split('-').map(Number);
+    $('dayTitle').textContent = cap(new Date(y, m - 1, d).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }));
+    $('hours').innerHTML = Array.from({ length: 24 }, (_, i) =>
+      `<label class="hour"><span class="hh">${pad(i)}:00</span><input class="note" data-h="${i}" maxlength="60" placeholder="Dodaj notatkę…" aria-label="Notatka ${pad(i)}:00"></label>`).join('');
+    const n = notes[k] || {};
+    $('hours').querySelectorAll('.note').forEach(inp => inp.value = n[inp.dataset.h] || '');
+    setOpen('win-day', true);
+  }
+  $('calPrev').addEventListener('click', () => { view.setMonth(view.getMonth() - 1); renderCal(); });
+  $('calNext').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); renderCal(); });
+  $('calDays').addEventListener('click', e => { const b = e.target.closest('.calday'); if (b) { beep(520, .06); openDay(b.dataset.day); } });
+  $('hours').addEventListener('input', e => {
+    const inp = e.target.closest('.note'); if (!inp) return;
+    const n = notes[selKey] = notes[selKey] || {}, v = inp.value.trim();
+    if (v) n[inp.dataset.h] = v; else delete n[inp.dataset.h];
+    if (!Object.keys(n).length) delete notes[selKey];
+    store.set('cal', JSON.stringify(notes)); renderCal();
+  });
+  renderCal();
+
   /* ---------- Zasilanie i uruchamianie ---------- */
   const power = $('power'), bootStatus = $('bootStatus');
   const BOOT_STEPS = ['Ładowanie systemu…', 'Zatwierdzanie konfiguracji…', 'Uruchamianie usług…', 'Wczytywanie interfejsu…'];
@@ -547,7 +633,7 @@
   $('restartBtn').addEventListener('click', boot);
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('Przywrócić ustawienia domyślne? Odcisk palca też zostanie usunięty.')) return;
-    ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall'].forEach(store.del);
+    ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall','cal'].forEach(store.del);
     location.reload();
   });
 
