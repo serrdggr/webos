@@ -6,17 +6,13 @@
 <title>WebOS</title>
 <style>
   :root { --wall-a: #1d2b64; --wall-b: #5b3a8c; --wall-c: #f2845c; --text: #fff;
-    --win-bg: #f4f5f7; --win-text: #1c1c21; --card: #fff; --line: #ececf0; --hover: #f0f1f4; --muted: #8a8d96; --head: #607d8b; }
-  .phone[data-theme="dark"] { --win-bg: #121214; --win-text: #ececf1; --card: #1e1e22; --line: #2c2c32; --hover: #28282e; --muted: #9a9ca6; --head: #2b2f36; }
+    --win-bg: #f4f5f7; --win-text: #1c1c21; --card: #fff; --line: #ececf0; --hover: #f0f1f4; --muted: #8a8d96; --head: #607d8b; --accent: #607d8b; }
+  .phone[data-theme="dark"] { --win-bg: #121214; --win-text: #ececf1; --card: #1e1e22; --line: #2c2c32; --hover: #28282e; --muted: #9a9ca6; --head: #2b2f36; --accent: #90a4ae; }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; }
   body { display: grid; place-items: center; background: #0d0d12; color: var(--text); font-family: "Roboto", "Segoe UI", system-ui, sans-serif; }
-  .phone {
-    position: relative; overflow: hidden; display: flex; flex-direction: column;
-    width: min(100vw, 390px); height: min(100dvh, 800px); border-radius: 36px;
-    background: linear-gradient(170deg, var(--wall-a) 0%, var(--wall-b) 55%, var(--wall-c) 100%);
-    box-shadow: 0 0 0 8px #1b1b22, 0 30px 80px rgba(0,0,0,.6);
-  }
+  .phone { position: relative; overflow: hidden; display: flex; flex-direction: column; width: min(100vw, 390px); height: min(100dvh, 800px); border-radius: 36px;
+    background: linear-gradient(170deg, var(--wall-a) 0%, var(--wall-b) 55%, var(--wall-c) 100%); box-shadow: 0 0 0 8px #1b1b22, 0 30px 80px rgba(0,0,0,.6); }
   @media (max-width: 420px) { .phone { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; } }
   .status { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px 0; font-size: 13px; font-weight: 500; }
   .status .icons { display: flex; gap: 6px; align-items: center; }
@@ -30,20 +26,49 @@
   .icon { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
   .icon svg { width: 30px; height: 30px; fill: #fff; }
   .app:focus-visible, .back:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 12px; }
-  .window { position: absolute; inset: 0; z-index: 5; flex-direction: column; background: var(--win-bg); color: var(--win-text); display: none; }
-  .window.open { display: flex; }
+  .window { position: absolute; inset: 0; z-index: 5; flex-direction: column; background: var(--win-bg); color: var(--win-text); display: flex;
+    visibility: hidden; opacity: 0; transform: translateX(28%) scale(.97); box-shadow: -12px 0 32px rgba(0,0,0,.25);
+    transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .22s ease, visibility 0s linear .32s; }
+  .window.open { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
+  .window.open .body > * { animation: rise .38s cubic-bezier(.2,.8,.2,1) both; }
+  .window.open .body > *:nth-child(1) { animation-delay: .08s; }
+  .window.open .body > *:nth-child(2) { animation-delay: .13s; }
+  .window.open .body > *:nth-child(3) { animation-delay: .18s; }
+  .window.open .body > *:nth-child(n+4) { animation-delay: .23s; }
+  .window.open .walls .wall { animation: pop .35s cubic-bezier(.2,.8,.2,1) both; }
+  .window.open .walls .wall:nth-child(2) { animation-delay: .05s; } .window.open .walls .wall:nth-child(3) { animation-delay: .1s; }
+  .window.open .walls .wall:nth-child(4) { animation-delay: .15s; } .window.open .walls .wall:nth-child(5) { animation-delay: .2s; } .window.open .walls .wall:nth-child(6) { animation-delay: .25s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+  .app { transition: transform .15s; } .app:active { transform: scale(.92); }
+  .row { transition: background .15s; }
+  @media (prefers-reduced-motion: reduce) { .window, .window.open, #lock { transition-duration: .01s; } .window.open .body > *, .window.open .walls .wall { animation: none; } }
   .window header { display: flex; align-items: center; gap: 14px; padding: 40px 16px 14px; background: var(--head); color: #fff; font-size: 20px; font-weight: 500; }
   .back { background: none; border: 0; color: inherit; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; }
   .back svg { width: 24px; height: 24px; fill: currentColor; }
   .window .body { flex: 1; padding: 20px; overflow: auto; }
-  .list { background: var(--card); border-radius: 16px; overflow: hidden; }
-  .row { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 16px 18px; background: none; border: 0; border-bottom: 1px solid var(--line); color: inherit; font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+  .list { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 18px; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 16px 18px; background: none; border: 0; border-bottom: 1px solid var(--line); color: inherit; font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
   .row:last-child { border-bottom: 0; }
-  .row:hover { background: var(--hover); }
-  .row svg { width: 20px; height: 20px; fill: var(--muted); }
+  button.row:hover { background: var(--hover); }
+  .row svg { width: 20px; height: 20px; fill: var(--muted); flex: none; }
+  .row small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .row .val { color: var(--muted); font-size: 14px; text-align: right; word-break: break-all; }
   .row .check { visibility: hidden; fill: currentColor; }
   .row[aria-checked="true"] .check { visibility: visible; }
+  .row.static { cursor: default; }
+  .row[disabled] { opacity: .45; cursor: not-allowed; }
   .section-title { margin: 0 4px 10px; font-size: 14px; color: var(--muted); }
+  .sw { position: relative; width: 44px; height: 26px; border-radius: 13px; background: #b0b3ba; flex: none; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  [aria-checked="true"] > .sw { background: var(--accent); }
+  [aria-checked="true"] > .sw::after { transform: translateX(18px); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .slider { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .slider:last-child { border-bottom: 0; }
+  .slider label { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px; }
+  .slider label span { color: var(--muted); }
+  .txt { width: 150px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--win-bg); color: var(--win-text); font: inherit; font-size: 15px; text-align: right; }
   .walls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .wall { position: relative; height: 150px; border: 0; border-radius: 16px; cursor: pointer; color: #fff; font: inherit; font-size: 14px; font-weight: 500; text-align: left; padding: 0 0 10px 12px; display: flex; align-items: flex-end; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
   .wall[aria-checked="true"] { outline: 3px solid var(--win-text); outline-offset: 2px; }
@@ -51,6 +76,39 @@
   .wall[aria-checked="true"] .check { visibility: visible; }
   .wall:focus-visible { outline: 3px solid var(--win-text); outline-offset: 2px; }
   .row.danger { color: #e53935; }
+  /* odcisk palca */
+  .fp { position: relative; -webkit-tap-highlight-color: transparent; width: 112px; height: 112px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; cursor: pointer; overflow: hidden; transition: transform .15s, border-color .2s, background .2s; }
+  .fp:hover { background: rgba(255,255,255,.2); }
+  .fp:active { transform: scale(.94); }
+  .fp svg { width: 84px; height: 84px; }
+  .fp::after { content: ""; position: absolute; left: 0; right: 0; height: 3px; top: 0; background: #7CFFB2; box-shadow: 0 0 12px #7CFFB2; opacity: 0; }
+  .fp.scanning::after { opacity: 1; animation: scan .4s ease-in-out infinite alternate; }
+  .fp.scanning { border-color: #7CFFB2; color: #7CFFB2; }
+  .fp.ok { border-color: #7CFFB2; background: rgba(124,255,178,.25); color: #7CFFB2; }
+  .fp.fail { border-color: #ff6b6b; color: #ff6b6b; }
+  @keyframes scan { from { top: 0; } to { top: calc(100% - 3px); } }
+  .win-fp { color: var(--win-text); }
+  .fpbox { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 30px 10px; text-align: center; }
+  .fpbox .fp { color: var(--accent); border-color: var(--line); background: var(--card); }
+  .fpbox .fp.scanning, .fpbox .fp.ok { color: #1db954; border-color: #1db954; }
+  .fpbox .fp::after { background: #1db954; box-shadow: 0 0 12px #1db954; }
+  .dots { display: flex; gap: 10px; }
+  .dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+  .dots i.on { background: #1db954; }
+  .fpmsg { font-size: 15px; color: var(--muted); min-height: 40px; max-width: 260px; }
+  #lock { position: absolute; inset: 0; z-index: 15; display: flex; visibility: hidden; opacity: 0; transform: scale(1.04); transition: opacity .25s ease, transform .25s ease, visibility 0s linear .25s; flex-direction: column; align-items: center; background: linear-gradient(170deg, var(--wall-a) 0%, var(--wall-b) 55%, var(--wall-c) 100%); }
+  #lock.on { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
+  #lock.on .unlock { animation: rise .45s .1s cubic-bezier(.2,.8,.2,1) both; }
+  #lock .fp:not(.scanning):not(.ok) { animation: pulse 2s ease-out infinite; }
+  @keyframes pulse { from { box-shadow: 0 0 0 0 rgba(255,255,255,.45); } to { box-shadow: 0 0 0 24px rgba(255,255,255,0); } }
+  .fp.ok svg { animation: okpop .3s cubic-bezier(.2,.8,.2,1); }
+  @keyframes okpop { 50% { transform: scale(1.18); } }
+  #lock .clock { padding-bottom: 0; }
+  #lock .time { font-size: 80px; }
+  #lock .unlock { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 0 24px 56px; }
+  #lock .lmsg { font-size: 14px; opacity: .85; min-height: 20px; text-align: center; }
+  #lock .pn { margin-top: 18px; font-size: 14px; opacity: .7; }
+  #dim { position: absolute; inset: 0; z-index: 30; background: #000; opacity: 0; pointer-events: none; }
   #power { position: absolute; inset: 0; z-index: 20; background: #000; color: #fff; display: none; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; touch-action: none; }
   #power[data-state="boot"], #power[data-state="off"] { display: flex; }
   #power .logo { display: none; font-size: 44px; font-weight: 300; letter-spacing: 6px; }
@@ -89,6 +147,7 @@
       </button>
     </section>
 
+    <!-- USTAWIENIA -->
     <div class="window" id="win-settings" role="dialog" aria-label="Ustawienia" aria-hidden="true">
       <header>
         <button class="back" data-close="win-settings" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
@@ -98,6 +157,9 @@
         <div class="list">
           <button class="row" data-open="win-display"><span>Ekran</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
           <button class="row" data-open="win-wallpaper"><span>Tapety</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+          <button class="row" data-open="win-sound"><span>Dźwięk i wibracje</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+          <button class="row" data-open="win-security"><span>Blokada i bezpieczeństwo</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+          <button class="row" data-open="win-info"><span>Informacje o telefonie</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
           <button class="row" data-open="win-power"><span>Zasilanie</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
         </div>
       </div>
@@ -114,6 +176,13 @@
           <button class="row" role="radio" data-theme-set="light" aria-checked="true"><span>Jasny</span><svg class="check" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
           <button class="row" role="radio" data-theme-set="dark" aria-checked="false"><span>Ciemny</span><svg class="check" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
         </div>
+        <p class="section-title">Jasność</p>
+        <div class="list"><div class="slider"><label for="bright">Jasność ekranu <span id="brightVal">100%</span></label><input type="range" id="bright" min="20" max="100" value="100"></div></div>
+        <p class="section-title">Zegar</p>
+        <div class="list">
+          <button class="row" role="switch" id="sw24" aria-checked="true"><span>Format 24-godzinny</span><span class="sw"></span></button>
+          <button class="row" role="switch" id="swSec" aria-checked="false"><span>Pokazuj sekundy</span><span class="sw"></span></button>
+        </div>
       </div>
     </div>
 
@@ -122,8 +191,67 @@
         <button class="back" data-close="win-wallpaper" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
         <span>Tapety</span>
       </header>
+      <div class="body"><div class="walls" id="walls" role="radiogroup" aria-label="Tapeta"></div></div>
+    </div>
+
+    <div class="window" id="win-sound" role="dialog" aria-label="Dźwięk i wibracje" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-sound" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Dźwięk i wibracje</span>
+      </header>
       <div class="body">
-        <div class="walls" id="walls" role="radiogroup" aria-label="Tapeta"></div>
+        <div class="list">
+          <div class="slider"><label for="vol">Głośność <span id="volVal">60%</span></label><input type="range" id="vol" min="0" max="100" value="60"></div>
+          <button class="row" role="switch" id="swSound" aria-checked="true"><span>Dźwięki systemu</span><span class="sw"></span></button>
+          <button class="row" role="switch" id="swVib" aria-checked="true"><span>Wibracje<small>Działa na telefonach z obsługą wibracji</small></span><span class="sw"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="window" id="win-security" role="dialog" aria-label="Blokada i bezpieczeństwo" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-security" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Blokada i bezpieczeństwo</span>
+      </header>
+      <div class="body">
+        <div class="list">
+          <button class="row" data-open="win-finger"><span>Odcisk palca<small id="fpState">Nie dodano</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+          <button class="row" role="switch" id="swLock" aria-checked="false" disabled><span>Blokada odciskiem palca<small>Najpierw dodaj odcisk palca</small></span><span class="sw"></span></button>
+          <button class="row" id="lockNow" disabled><span>Zablokuj teraz</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="window win-fp" id="win-finger" role="dialog" aria-label="Odcisk palca" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-finger" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Odcisk palca</span>
+      </header>
+      <div class="body">
+        <div class="fpbox">
+          <button class="fp" id="enrollBtn" aria-label="Czytnik odcisku palca"><svg class="fpi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 4.4C16 3.4 14.1 3 12 3S8 3.5 6.2 4.4"/><path d="M3.5 9.7c1-1.4 2.2-2.5 3.8-3.3 3-1.5 6.9-1.5 9.9 0 1.5.8 2.8 1.9 3.8 3.3"/><path d="M9.7 21.8c-.9-.9-1.3-1.4-2-2.6-.7-1.2-1.1-2.7-1.1-4.3 0-3 2.5-5.4 5.7-5.4s5.7 2.4 5.7 5.4"/><path d="M17 19.9c-1.2 0-2.2-.3-3.1-.9-1.5-1-2.4-2.7-2.4-4.4"/><path d="M14.9 22c-1.6-.4-2.6-1-3.7-2.1-1.4-1.4-2.2-3.2-2.2-5.2 0-1.6 1.4-2.9 3.1-2.9s3.1 1.3 3.1 2.9c0 1.1.9 1.9 2.1 1.9s2.1-.8 2.1-1.9c0-3.8-3.3-6.8-7.3-6.8-2.8 0-5.4 1.6-6.6 4-.4.8-.6 1.8-.6 2.8 0 .8.1 2 .7 3.6"/></svg></button>
+          <div class="dots" id="dots"><i></i><i></i><i></i></div>
+          <p class="fpmsg" id="enrollMsg">Kliknij czytnik 3 razy, aby zarejestrować odcisk palca.</p>
+        </div>
+        <div class="list"><button class="row danger" id="fpRemove" disabled><span>Usuń odcisk palca</span></button></div>
+      </div>
+    </div>
+
+    <div class="window" id="win-info" role="dialog" aria-label="Informacje o telefonie" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-info" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Informacje o telefonie</span>
+      </header>
+      <div class="body">
+        <div class="list">
+          <label class="row static"><span>Nazwa urządzenia</span><input class="txt" id="devName" maxlength="20" value="Mój WebOS" aria-label="Nazwa urządzenia"></label>
+          <div class="row static"><span>Numer telefonu</span><span class="val" id="infoNum">…</span></div>
+          <div class="row static"><span>Adres IP</span><span class="val" id="infoIp">…</span></div>
+          <div class="row static"><span>Wersja systemu</span><span class="val">WebOS 1.1</span></div>
+          <div class="row static"><span>Bateria</span><span class="val" id="infoBat">—</span></div>
+          <div class="row static"><span>Rozdzielczość</span><span class="val" id="infoRes">—</span></div>
+        </div>
+        <div class="list"><button class="row danger" id="resetBtn"><span>Przywróć ustawienia domyślne</span></button></div>
       </div>
     </div>
 
@@ -134,55 +262,88 @@
       </header>
       <div class="body">
         <div class="list">
+          <button class="row" id="restartBtn"><span>Uruchom ponownie</span></button>
           <button class="row danger" id="shutdownBtn"><span>Wyłącz telefon</span></button>
         </div>
       </div>
     </div>
 
+    <!-- EKRAN BLOKADY -->
+    <div id="lock" role="dialog" aria-label="Ekran blokady">
+      <div class="clock">
+        <div class="time" id="lockTime">--:--</div>
+        <div class="date" id="lockDate"></div>
+        <div class="pn" id="lockName"></div>
+      </div>
+      <div class="unlock">
+        <div class="lmsg" id="lockMsg">Dotknij czytnika, aby odblokować</div>
+        <button class="fp" id="unlockBtn" aria-label="Odblokuj odciskiem palca"><svg class="fpi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 4.4C16 3.4 14.1 3 12 3S8 3.5 6.2 4.4"/><path d="M3.5 9.7c1-1.4 2.2-2.5 3.8-3.3 3-1.5 6.9-1.5 9.9 0 1.5.8 2.8 1.9 3.8 3.3"/><path d="M9.7 21.8c-.9-.9-1.3-1.4-2-2.6-.7-1.2-1.1-2.7-1.1-4.3 0-3 2.5-5.4 5.7-5.4s5.7 2.4 5.7 5.4"/><path d="M17 19.9c-1.2 0-2.2-.3-3.1-.9-1.5-1-2.4-2.7-2.4-4.4"/><path d="M14.9 22c-1.6-.4-2.6-1-3.7-2.1-1.4-1.4-2.2-3.2-2.2-5.2 0-1.6 1.4-2.9 3.1-2.9s3.1 1.3 3.1 2.9c0 1.1.9 1.9 2.1 1.9s2.1-.8 2.1-1.9c0-3.8-3.3-6.8-7.3-6.8-2.8 0-5.4 1.6-6.6 4-.4.8-.6 1.8-.6 2.8 0 .8.1 2 .7 3.6"/></svg></button>
+      </div>
+    </div>
+
     <div id="power" data-state="boot">
-      <div class="brand">
-        <div class="logo">WebOS</div>
-        <div class="by">by serrdggr</div>
-      </div>
-      <div class="bootinfo">
-        <div class="status-line" id="bootStatus">Ładowanie systemu…</div>
-      </div>
+      <div class="brand"><div class="logo">WebOS</div><div class="by">by serrdggr</div></div>
+      <div class="bootinfo"><div class="status-line" id="bootStatus">Ładowanie systemu…</div></div>
       <div class="hint">Aby włączyć telefon, naciśnij Ctrl + Alt + P</div>
     </div>
 
     <div class="nav" id="navPill"><i></i></div>
+    <div id="dim"></div>
   </main>
 <script>
+  const $ = id => document.getElementById(id);
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  const phone = document.querySelector('.phone');
+  const state = {
+    h24: store.get('h24', '1') === '1', sec: store.get('sec', '0') === '1',
+    sound: store.get('sound', '1') === '1', vib: store.get('vib', '1') === '1',
+    vol: Number(store.get('vol', 60)), bright: Number(store.get('bright', 100)),
+    finger: store.get('finger', '0') === '1', lock: store.get('lock', '0') === '1',
+    name: store.get('name', 'Mój WebOS')
   };
 
-  const timeEl = document.getElementById('time');
-  const statusEl = document.getElementById('statusTime');
-  const dateEl = document.getElementById('date');
+  /* ---------- Dźwięk i wibracje ---------- */
+  let ac;
+  function beep(freq = 660, dur = .12, delay = 0) {
+    if (!state.sound || state.vol === 0) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + delay;
+      o.frequency.value = freq; o.type = 'sine';
+      g.gain.setValueAtTime(state.vol / 100 * .3, t);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur);
+    } catch (e) {}
+  }
+  const buzz = p => { if (state.vib && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} };
+
+  /* ---------- Zegar ---------- */
   function tick() {
     const now = new Date();
-    const hm = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-    timeEl.textContent = hm;
-    statusEl.textContent = hm;
+    const o = { hour: '2-digit', minute: '2-digit', hour12: !state.h24 };
+    const hm = now.toLocaleTimeString('pl-PL', o);
+    const full = state.sec ? now.toLocaleTimeString('pl-PL', { ...o, second: '2-digit' }) : hm;
+    $('time').textContent = full; $('lockTime').textContent = full; $('statusTime').textContent = hm;
+    $('time').style.fontSize = $('lockTime').style.fontSize = state.sec ? (state.h24 ? '64px' : '48px') : '';
     const d = now.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
-    dateEl.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+    $('date').textContent = $('lockDate').textContent = d.charAt(0).toUpperCase() + d.slice(1);
   }
-  tick();
-  setInterval(tick, 1000);
+  tick(); setInterval(tick, 1000);
+  let batLevel = null;
   if (navigator.getBattery) {
     navigator.getBattery().then(b => {
-      const show = () => document.getElementById('battery').textContent = Math.round(b.level * 100) + '%';
-      show(); b.addEventListener('levelchange', show);
+      const show = () => { batLevel = Math.round(b.level * 100); $('battery').textContent = batLevel + '%'; $('infoBat').textContent = batLevel + '%' + (b.charging ? ' (ładowanie)' : ''); };
+      show(); b.addEventListener('levelchange', show); b.addEventListener('chargingchange', show);
     });
   }
 
   /* ---------- Numer telefonu przypisany do IP ---------- */
-  const numEl = document.getElementById('phoneNum');
-  const IP_NUMBERS = {
-    // '83.12.34.56': '600-001',
-  };
+  const numEl = $('phoneNum');
+  const IP_NUMBERS = { /* '83.12.34.56': '600-001', */ };
   function ipToNumber(ip) {
     if (IP_NUMBERS[ip]) return IP_NUMBERS[ip];
     let h = 2166136261;
@@ -204,50 +365,61 @@
         if (!res.ok) continue;
         const ip = (await parse(res) || '').trim();
         if (ip) return ip;
-      } catch (e) { /* spróbuj następne źródło */ }
+      } catch (e) {}
     }
     return null;
   }
+  function showNum(num, ip) {
+    numEl.textContent = 'Nr tel.: ' + num; $('infoNum').textContent = num;
+    if (ip) { numEl.title = 'IP: ' + ip; $('infoIp').textContent = ip; }
+  }
   async function initPhoneNumber() {
     const cached = store.get('phone-num', '');
-    numEl.textContent = cached ? 'Nr tel.: ' + cached : 'Nr tel.: …';
+    if (cached) showNum(cached, store.get('phone-ip', ''));
     const ip = await fetchIp();
     if (ip) {
       const num = ipToNumber(ip);
-      store.set('phone-ip', ip);
-      store.set('phone-num', num);
-      numEl.textContent = 'Nr tel.: ' + num;
-      numEl.title = 'IP: ' + ip;
-    } else if (!cached) {
-      numEl.textContent = 'Nr tel.: brak sieci';
-    }
+      store.set('phone-ip', ip); store.set('phone-num', num); showNum(num, ip);
+    } else if (!cached) { numEl.textContent = 'Nr tel.: brak sieci'; $('infoNum').textContent = 'brak sieci'; $('infoIp').textContent = 'brak sieci'; }
   }
   initPhoneNumber();
   window.addEventListener('online', initPhoneNumber);
 
   /* ---------- Okna ---------- */
   const setOpen = (id, on) => {
-    const w = document.getElementById(id);
-    if (!w) return;
-    w.classList.toggle('open', on);
-    w.setAttribute('aria-hidden', String(!on));
+    const w = $(id); if (!w) return;
+    w.classList.toggle('open', on); w.setAttribute('aria-hidden', String(!on));
+    if (on) { if (id === 'win-info') $('infoRes').textContent = innerWidth + ' × ' + innerHeight; if (id === 'win-finger') resetEnrollUi(); }
   };
-  const closeTop = () => {
-    const open = [...document.querySelectorAll('.window.open')];
-    if (open.length) setOpen(open[open.length - 1].id, false);
-  };
+  const closeTop = () => { const o = [...document.querySelectorAll('.window.open')]; if (o.length) setOpen(o[o.length - 1].id, false); };
   const closeAll = () => document.querySelectorAll('.window.open').forEach(w => setOpen(w.id, false));
   document.addEventListener('click', e => {
     const o = e.target.closest('[data-open]');
-    if (o) return setOpen(o.dataset.open, true);
+    if (o) { beep(520, .06); return setOpen(o.dataset.open, true); }
     const c = e.target.closest('[data-close]');
     if (c) setOpen(c.dataset.close, false);
   });
-  document.getElementById('navPill').addEventListener('click', closeAll);
+  $('navPill').addEventListener('click', closeAll);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTop(); });
 
+  /* ---------- Przełączniki ---------- */
+  function bindSwitch(id, key, onChange) {
+    const el = $(id);
+    const paint = () => el.setAttribute('aria-checked', String(state[key]));
+    paint();
+    el.addEventListener('click', () => {
+      if (el.disabled) return;
+      state[key] = !state[key]; store.set(key, state[key] ? '1' : '0'); paint();
+      if (onChange) onChange(); beep(state[key] ? 760 : 480, .08); buzz(15);
+    });
+    return paint;
+  }
+  bindSwitch('sw24', 'h24', tick);
+  bindSwitch('swSec', 'sec', tick);
+  bindSwitch('swSound', 'sound');
+  bindSwitch('swVib', 'vib', () => buzz(40));
+
   /* ---------- Motyw ---------- */
-  const phone = document.querySelector('.phone');
   function setTheme(t) {
     phone.dataset.theme = t;
     document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.themeSet === t)));
@@ -255,6 +427,15 @@
   }
   document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
   setTheme(store.get('theme') === 'dark' ? 'dark' : 'light');
+
+  /* ---------- Jasność i głośność ---------- */
+  function setBright(v) { state.bright = v; $('dim').style.opacity = String((100 - v) / 100 * .75); $('brightVal').textContent = v + '%'; $('bright').value = v; store.set('bright', v); }
+  $('bright').addEventListener('input', e => setBright(Number(e.target.value)));
+  setBright(state.bright);
+  function setVol(v) { state.vol = v; $('volVal').textContent = v + '%'; $('vol').value = v; store.set('vol', v); }
+  $('vol').addEventListener('input', e => setVol(Number(e.target.value)));
+  $('vol').addEventListener('change', () => beep(660, .15));
+  setVol(state.vol);
 
   /* ---------- Tapety ---------- */
   const WALLS = [
@@ -265,7 +446,7 @@
     { name: 'Truskawka',     c: ['#4a1530', '#c2185b', '#ff8a9b'] },
     { name: 'Mięta',         c: ['#16373a', '#3fa796', '#e3f6d8'] },
   ];
-  const wallsEl = document.getElementById('walls');
+  const wallsEl = $('walls');
   wallsEl.innerHTML = WALLS.map((w, i) => `
     <button class="wall" role="radio" data-wall="${i}" aria-checked="false"
       style="background:linear-gradient(170deg, ${w.c[0]} 0%, ${w.c[1]} 55%, ${w.c[2]} 100%)">
@@ -277,50 +458,107 @@
     wallsEl.querySelectorAll('.wall').forEach(b => b.setAttribute('aria-checked', String(WALLS[b.dataset.wall] === w)));
     store.set('wall', String(WALLS.indexOf(w)));
   }
-  wallsEl.addEventListener('click', e => {
-    const b = e.target.closest('.wall');
-    if (b) setWall(Number(b.dataset.wall));
-  });
+  wallsEl.addEventListener('click', e => { const b = e.target.closest('.wall'); if (b) setWall(Number(b.dataset.wall)); });
   setWall(Number(store.get('wall', 0)) || 0);
 
+  /* ---------- Nazwa urządzenia ---------- */
+  const nameEl = $('devName');
+  nameEl.value = state.name; $('lockName').textContent = state.name;
+  nameEl.addEventListener('input', () => {
+    state.name = nameEl.value.trim() || 'Mój WebOS';
+    store.set('name', state.name); $('lockName').textContent = state.name;
+  });
+
+  /* ---------- Odcisk palca ---------- */
+  const lockEl = $('lock');
+  const swLock = $('swLock'), lockNow = $('lockNow');
+  function refreshSecurity() {
+    $('fpState').textContent = state.finger ? 'Dodano 1 odcisk' : 'Nie dodano';
+    swLock.disabled = !state.finger; lockNow.disabled = !(state.finger && state.lock);
+    swLock.querySelector('small').textContent = state.finger ? 'Wymagaj odcisku palca po uruchomieniu i na żądanie' : 'Najpierw dodaj odcisk palca';
+    swLock.setAttribute('aria-checked', String(state.finger && state.lock));
+    $('fpRemove').disabled = !state.finger;
+  }
+  swLock.addEventListener('click', () => {
+    if (swLock.disabled) return;
+    state.lock = !state.lock; store.set('lock', state.lock ? '1' : '0'); refreshSecurity(); beep(state.lock ? 760 : 480, .08);
+  });
+
+  let enrolled = 0, busy = false;
+  function resetEnrollUi() {
+    enrolled = state.finger ? 3 : 0;
+    document.querySelectorAll('#dots i').forEach((d, i) => d.classList.toggle('on', i < enrolled));
+    $('enrollMsg').textContent = state.finger ? 'Odcisk palca jest zarejestrowany. Możesz go dodać ponownie, klikając czytnik.' : 'Kliknij czytnik 3 razy, aby zarejestrować odcisk palca.';
+    if (state.finger) enrolled = 0;
+    $('enrollBtn').className = 'fp';
+  }
+  function scan(btn, ms, done) {
+    if (busy) return; busy = true;
+    btn.classList.remove('ok', 'fail'); btn.classList.add('scanning'); buzz(20);
+    setTimeout(() => { btn.classList.remove('scanning'); busy = false; done(); }, ms);
+  }
+  $('enrollBtn').addEventListener('click', () => {
+    const btn = $('enrollBtn');
+    scan(btn, 600, () => {
+      enrolled++;
+      document.querySelectorAll('#dots i').forEach((d, i) => d.classList.toggle('on', i < enrolled));
+      beep(600 + enrolled * 120, .1); buzz(30);
+      if (enrolled >= 3) {
+        state.finger = true; store.set('finger', '1'); state.lock = true; store.set('lock', '1'); refreshSecurity();
+        btn.classList.add('ok'); $('enrollMsg').textContent = 'Gotowe! Odcisk palca dodany, blokada włączona.';
+        beep(880, .15, .12); buzz([30, 40, 60]); enrolled = 0;
+      } else { $('enrollMsg').textContent = `Zeskanowano ${enrolled} z 3. Kliknij czytnik ponownie.`; }
+    });
+  });
+  $('fpRemove').addEventListener('click', () => {
+    state.finger = false; state.lock = false; store.del('finger'); store.del('lock'); refreshSecurity(); resetEnrollUi();
+  });
+
+  function showLock() {
+    if (!(state.finger && state.lock)) return;
+    closeAll(); $('lockMsg').textContent = 'Dotknij czytnika, aby odblokować';
+    $('unlockBtn').className = 'fp'; lockEl.classList.add('on');
+  }
+  $('unlockBtn').addEventListener('click', () => {
+    const btn = $('unlockBtn');
+    $('lockMsg').textContent = 'Skanowanie…';
+    scan(btn, 450, () => {
+      btn.classList.add('ok'); $('lockMsg').textContent = 'Odblokowano'; beep(880, .1); beep(1180, .12, .07); buzz([25, 40, 25]);
+      setTimeout(() => lockEl.classList.remove('on'), 140);
+    });
+  });
+  lockNow.addEventListener('click', showLock);
+  refreshSecurity();
+
   /* ---------- Zasilanie i uruchamianie ---------- */
-  const power = document.getElementById('power');
-  const bootStatus = document.getElementById('bootStatus');
+  const power = $('power'), bootStatus = $('bootStatus');
   const BOOT_STEPS = ['Ładowanie systemu…', 'Zatwierdzanie konfiguracji…', 'Uruchamianie usług…', 'Wczytywanie interfejsu…'];
   let bootTimer, stepTimer;
   function boot() {
-    closeAll();
+    closeAll(); lockEl.classList.remove('on');
     power.dataset.state = 'boot';
-    clearTimeout(bootTimer);
-    clearInterval(stepTimer);
-    let step = 0;
-    bootStatus.textContent = BOOT_STEPS[0];
-    stepTimer = setInterval(() => {
-      step = Math.min(step + 1, BOOT_STEPS.length - 1);
-      bootStatus.textContent = BOOT_STEPS[step];
-    }, 1250);
-    bootTimer = setTimeout(() => { clearInterval(stepTimer); power.dataset.state = ''; }, 5000);
+    clearTimeout(bootTimer); clearInterval(stepTimer);
+    let step = 0; bootStatus.textContent = BOOT_STEPS[0];
+    stepTimer = setInterval(() => { step = Math.min(step + 1, BOOT_STEPS.length - 1); bootStatus.textContent = BOOT_STEPS[step]; }, 1250);
+    bootTimer = setTimeout(() => { clearInterval(stepTimer); power.dataset.state = ''; beep(523, .12); beep(784, .16, .12); showLock(); }, 5000);
   }
-  function shutdown() {
-    clearTimeout(bootTimer);
-    clearInterval(stepTimer);
-    closeAll();
-    power.dataset.state = 'off';
-  }
-  document.getElementById('shutdownBtn').addEventListener('click', shutdown);
+  function shutdown() { clearTimeout(bootTimer); clearInterval(stepTimer); closeAll(); lockEl.classList.remove('on'); power.dataset.state = 'off'; }
+  $('shutdownBtn').addEventListener('click', shutdown);
+  $('restartBtn').addEventListener('click', boot);
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('Przywrócić ustawienia domyślne? Odcisk palca też zostanie usunięty.')) return;
+    ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall'].forEach(store.del);
+    location.reload();
+  });
 
-  // Włączanie wyłączonego telefonu: Ctrl+Alt+P albo przytrzymanie ekranu przez 2 s
   document.addEventListener('keydown', e => {
     if (power.dataset.state === 'off' && e.ctrlKey && e.altKey && e.code === 'KeyP') { e.preventDefault(); boot(); }
   });
   let holdTimer;
-  power.addEventListener('pointerdown', () => {
-    if (power.dataset.state !== 'off') return;
-    holdTimer = setTimeout(boot, 2000);
-  });
+  power.addEventListener('pointerdown', () => { if (power.dataset.state !== 'off') return; holdTimer = setTimeout(boot, 2000); });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
 
-  boot(); // start strony = uruchomienie telefonu
+  boot();
 </script>
 </body>
 </html>
