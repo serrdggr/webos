@@ -50,63 +50,13 @@
   .wall .check { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; padding: 3px; border-radius: 50%; background: #fff; fill: #1c1c21; visibility: hidden; }
   .wall[aria-checked="true"] .check { visibility: visible; }
   .wall:focus-visible { outline: 3px solid var(--win-text); outline-offset: 2px; }
-  .store-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--card); border-radius: 16px; margin-bottom: 12px; }
-  .store-card .icon { flex: none; font-size: 26px; font-weight: 500; color: #fff; }
-  .store-card .meta { flex: 1; min-width: 0; }
-  .store-card .meta b { display: block; font-size: 16px; font-weight: 500; }
-  .store-card .meta small { color: var(--muted); font-size: 13px; }
-  .btn { border: 0; border-radius: 20px; padding: 9px 16px; background: #00a86b; color: #fff; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-  .btn.danger { background: transparent; color: #e53935; box-shadow: inset 0 0 0 1.5px #e53935; }
-  .btn:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
-  .calc { display: flex; flex-direction: column; padding: 12px 14px 18px; }
-  .calc-screen { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; padding: 8px 10px 18px; min-height: 0; overflow: hidden; }
-  .calc-expr { min-height: 22px; font-size: 16px; color: var(--muted); }
-  .calc-out { font-size: 56px; font-weight: 300; line-height: 1.1; max-width: 100%; overflow-wrap: anywhere; text-align: right; }
-  .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .key { height: 62px; border: 0; border-radius: 20px; background: var(--card); color: var(--win-text); font: inherit; font-size: 24px; cursor: pointer; }
-  .key:hover { background: var(--hover); }
-  .key.fn { background: var(--line); }
-  .key.op { background: #ff7043; color: #fff; }
-  .key.op:hover { background: #ff8a65; }
-  .key:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
-  .notes { display: flex; flex-direction: column; }
-  .note-list { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-  .note { display: block; width: 100%; text-align: left; padding: 14px 16px; border: 0; border-radius: 16px; background: var(--card); color: inherit; font: inherit; cursor: pointer; }
-  .note:hover { background: var(--hover); }
-  .note b { display: block; font-size: 16px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .note span { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .empty { margin-top: 40px; text-align: center; color: var(--muted); }
-  .fab { position: sticky; bottom: 0; align-self: flex-end; margin-top: 14px; width: 56px; height: 56px; border: 0; border-radius: 50%; background: #f9a825; color: #fff; font-size: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
-  .note-edit { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-  .note-bar { display: flex; justify-content: space-between; }
-  .note-edit textarea { flex: 1; min-height: 200px; resize: none; border: 0; border-radius: 16px; padding: 16px; background: var(--card); color: inherit; font: inherit; font-size: 16px; line-height: 1.5; }
-  .note-edit textarea:focus-visible, .fab:focus-visible, .note:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
-  .wx-city { width: 100%; padding: 12px 14px; border: 0; border-radius: 14px; background: var(--card); color: inherit; font: inherit; font-size: 16px; }
-  .wx-now { text-align: center; padding: 18px 0 22px; }
-  .wx-now .ico { font-size: 60px; line-height: 1.1; }
-  .wx-now .big { font-size: 72px; font-weight: 200; line-height: 1; }
-  .wx-now .lbl { margin-top: 6px; color: var(--muted); font-size: 16px; }
-  .wx-row { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-  .wx-row:last-child { border-bottom: 0; }
-  .wx-row .d { flex: 1; } .wx-row .i { font-size: 22px; } .wx-row .t { min-width: 70px; text-align: right; }
-  .wx-row .t small { color: var(--muted); }
-  .wx-loc { text-align: center; color: var(--muted); font-size: 16px; padding-top: 4px; }
-  .body.browser { padding: 0; display: flex; flex-direction: column; }
-  .br-bar { display: flex; gap: 6px; padding: 8px; background: var(--card); border-bottom: 1px solid var(--line); }
-  .br-b { flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--hover); color: inherit; font-size: 20px; cursor: pointer; }
-  .br-b:disabled { opacity: .35; cursor: default; }
-  .br-b:focus-visible, .br-url:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
-  .br-url { flex: 1; min-width: 0; border: 0; border-radius: 18px; padding: 0 14px; background: var(--hover); color: inherit; font: inherit; font-size: 15px; }
-  .br-home { padding: 16px; overflow: auto; }
-  .br-frame { flex: 1; width: 100%; border: 0; background: #fff; }
-  .br-note { padding: 8px 12px; font-size: 12px; color: var(--muted); text-align: center; }
-  .yw-add { display: flex; gap: 8px; margin-bottom: 14px; }
-  .yw-in { flex: 1; min-width: 0; height: 40px; border: 0; border-radius: 20px; padding: 0 14px; background: var(--card); color: inherit; font: inherit; font-size: 15px; }
-  .yw-in:focus-visible { outline: 2px solid var(--win-text); outline-offset: 2px; }
-  .yw-player { display: flex; flex-direction: column; gap: 12px; }
-  .yw-player iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 14px; background: #000; }
-  .yw-title { font-size: 17px; font-weight: 500; }
-  [hidden] { display: none !important; }
+  .row.danger { color: #e53935; }
+  #power { position: absolute; inset: 0; z-index: 20; background: #000; color: #fff; display: none; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #power[data-state="boot"], #power[data-state="off"] { display: flex; }
+  #power .logo { display: none; font-size: 44px; font-weight: 300; letter-spacing: 6px; }
+  #power[data-state="boot"] .logo { display: block; }
+  #power .hint { display: none; position: absolute; left: 0; right: 0; bottom: 36px; padding: 0 24px; text-align: center; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,.6); }
+  #power[data-state="off"] .hint { display: block; }
   .nav { position: relative; z-index: 6; display: flex; justify-content: center; padding: 6px 0 12px; }
   .nav i { width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.7); }
 </style>
@@ -131,10 +81,6 @@
         <div class="icon" style="background:#607d8b"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.8 1.7 1l.4 2.6h4l.4-2.6c.6-.2 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>
         <span>Ustawienia</span>
       </button>
-      <button class="app" data-open="win-store">
-        <div class="icon" style="background:#00a86b"><svg viewBox="0 0 24 24"><path d="M6 3.5l14 8.5-14 8.5z"/></svg></div>
-        <span>Sklep Hej</span>
-      </button>
     </section>
 
     <div class="window" id="win-settings" role="dialog" aria-label="Ustawienia" aria-hidden="true">
@@ -146,6 +92,7 @@
         <div class="list">
           <button class="row" data-open="win-display"><span>Ekran</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
           <button class="row" data-open="win-wallpaper"><span>Tapety</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
+          <button class="row" data-open="win-power"><span>Zasilanie</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4z"/></svg></button>
         </div>
       </div>
     </div>
@@ -174,15 +121,21 @@
       </div>
     </div>
 
-    <div class="window" id="win-store" role="dialog" aria-label="SKLEPHEJ" aria-hidden="true">
+    <div class="window" id="win-power" role="dialog" aria-label="Zasilanie" aria-hidden="true">
       <header>
-        <button class="back" data-close="win-store" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
-        <span>Sklep Hej</span>
+        <button class="back" data-close="win-power" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Zasilanie</span>
       </header>
       <div class="body">
-        <p class="section-title">Aplikacje</p>
-        <div id="storeList"></div>
+        <div class="list">
+          <button class="row danger" id="shutdownBtn"><span>Wyłącz telefon</span></button>
+        </div>
       </div>
+    </div>
+
+    <div id="power" data-state="boot">
+      <div class="logo">WebOS</div>
+      <div class="hint">Aby włączyć telefon, naciśnij Ctrl + Alt + P</div>
     </div>
 
     <div class="nav" id="navPill"><i></i></div>
@@ -214,12 +167,9 @@
   }
 
   /* ---------- Numer telefonu przypisany do IP ---------- */
-  // Ten sam adres IP zawsze daje ten sam numer (hash IP -> 600-001 … 600-999).
   const numEl = document.getElementById('phoneNum');
-  // Tutaj wpisujesz własne przypisania: 'adres IP': 'numer'
   const IP_NUMBERS = {
     // '83.12.34.56': '600-001',
-    // '2a02:1234:abcd::1': '600-002',
   };
   function ipToNumber(ip) {
     if (IP_NUMBERS[ip]) return IP_NUMBERS[ip];
@@ -263,6 +213,7 @@
   initPhoneNumber();
   window.addEventListener('online', initPhoneNumber);
 
+  /* ---------- Okna ---------- */
   const setOpen = (id, on) => {
     const w = document.getElementById(id);
     if (!w) return;
@@ -280,6 +231,10 @@
     const c = e.target.closest('[data-close]');
     if (c) setOpen(c.dataset.close, false);
   });
+  document.getElementById('navPill').addEventListener('click', closeAll);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTop(); });
+
+  /* ---------- Motyw ---------- */
   const phone = document.querySelector('.phone');
   function setTheme(t) {
     phone.dataset.theme = t;
@@ -289,6 +244,7 @@
   document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
   setTheme(store.get('theme') === 'dark' ? 'dark' : 'light');
 
+  /* ---------- Tapety ---------- */
   const WALLS = [
     { name: 'Zachód słońca', c: ['#1d2b64', '#5b3a8c', '#f2845c'] },
     { name: 'Ocean',         c: ['#0f2027', '#1c6e8c', '#5fd0c9'] },
@@ -315,335 +271,34 @@
   });
   setWall(Number(store.get('wall', 0)) || 0);
 
-  /* ---------- Kalkulator ---------- */
-  function initCalc(root) {
-    root.innerHTML = '<div class="calc-screen"><div class="calc-expr"></div><div class="calc-out">0</div></div><div class="calc-keys"></div>';
-    const exprEl = root.querySelector('.calc-expr'), outEl = root.querySelector('.calc-out');
-    const KEYS = [
-      ['C','fn'],['±','fn'],['%','fn'],['÷','op'],
-      ['7'],['8'],['9'],['×','op'],
-      ['4'],['5'],['6'],['−','op'],
-      ['1'],['2'],['3'],['+','op'],
-      ['⌫','fn'],['0'],[','],['=','op'],
-    ];
-    root.querySelector('.calc-keys').innerHTML = KEYS.map(k => `<button class="key ${k[1] || ''}" data-k="${k[0]}">${k[0]}</button>`).join('');
+  /* ---------- Zasilanie i uruchamianie ---------- */
+  const power = document.getElementById('power');
+  let bootTimer;
+  function boot() {
+    closeAll();
+    power.dataset.state = 'boot';
+    clearTimeout(bootTimer);
+    bootTimer = setTimeout(() => { power.dataset.state = ''; }, 5000);
+  }
+  function shutdown() {
+    clearTimeout(bootTimer);
+    closeAll();
+    power.dataset.state = 'off';
+  }
+  document.getElementById('shutdownBtn').addEventListener('click', shutdown);
 
-    let cur = '0', prev = null, op = null, fresh = false, error = false;
-    const fmt = n => isFinite(n) ? parseFloat(n.toPrecision(12)).toString() : null;
-    const show = () => {
-      outEl.textContent = error ? 'Błąd' : cur.replace('.', ',');
-      exprEl.textContent = (prev !== null && op) ? prev.replace('.', ',') + ' ' + op : '';
-    };
-    const calc = (a, b, o) => {
-      a = parseFloat(a); b = parseFloat(b);
-      if (o === '+') return a + b;
-      if (o === '−') return a - b;
-      if (o === '×') return a * b;
-      if (o === '÷') return b === 0 ? NaN : a / b;
-    };
-    const reset = () => { cur = '0'; prev = null; op = null; fresh = false; error = false; };
-    const setResult = r => {
-      const t = fmt(r);
-      if (t === null) { reset(); error = true; } else { cur = t; }
-    };
-    function press(k) {
-      if (error && k !== 'C') reset();
-      if (/^[0-9]$/.test(k)) {
-        if (fresh || cur === '0') cur = k; else if (cur.replace(/[-.]/g, '').length < 12) cur += k;
-        fresh = false;
-      } else if (k === ',') {
-        if (fresh) { cur = '0.'; fresh = false; } else if (!cur.includes('.')) cur += '.';
-      } else if (k === 'C') {
-        reset();
-      } else if (k === '⌫') {
-        if (!fresh) { cur = cur.length > 1 && !(cur.length === 2 && cur[0] === '-') ? cur.slice(0, -1) : '0'; }
-      } else if (k === '±') {
-        if (cur !== '0') cur = cur[0] === '-' ? cur.slice(1) : '-' + cur;
-      } else if (k === '%') {
-        setResult(parseFloat(cur) / 100); fresh = true;
-      } else if (k === '=') {
-        if (op !== null && prev !== null) {
-          setResult(calc(prev, cur, op));
-          prev = null; op = null; fresh = true;
-        }
-      } else {
-        if (op !== null && prev !== null && !fresh) {
-          setResult(calc(prev, cur, op));
-          if (error) { show(); return; }
-        }
-        prev = cur; op = k; fresh = true;
-      }
-      show();
-    }
-    root.querySelector('.calc-keys').addEventListener('click', e => {
-      const b = e.target.closest('.key');
-      if (b) press(b.dataset.k);
-    });
-    const onKey = e => {
-      if (!document.getElementById('win-calc')?.classList.contains('open')) return;
-      const map = { '*': '×', '/': '÷', '-': '−', '+': '+', '.': ',', ',': ',', 'Enter': '=', '=': '=', 'Backspace': '⌫', 'Delete': 'C' };
-      const k = /^[0-9]$/.test(e.key) ? e.key : map[e.key];
-      if (k) { e.preventDefault(); press(k); }
-    };
-    document.addEventListener('keydown', onKey);
-    show();
-    return () => document.removeEventListener('keydown', onKey);
-  }
-
-  /* ---------- Notatki ---------- */
-  function initNotes(root) {
-    let notes = [];
-    try { notes = JSON.parse(store.get('notes', '[]')) || []; } catch (e) {}
-    let current = null;
-    root.innerHTML =
-      '<div class="note-view"><div class="note-list"></div><button class="fab" aria-label="Nowa notatka">+</button></div>' +
-      '<div class="note-edit" hidden><div class="note-bar"><button class="btn back-list">‹ Lista</button><button class="btn danger del">Usuń</button></div>' +
-      '<textarea aria-label="Treść notatki" placeholder="Zacznij pisać…"></textarea></div>';
-    const view = root.querySelector('.note-view'), listEl = root.querySelector('.note-list');
-    const edit = root.querySelector('.note-edit'), ta = edit.querySelector('textarea');
-    const save = () => store.set('notes', JSON.stringify(notes));
-    const render = () => {
-      listEl.textContent = '';
-      if (!notes.length) {
-        const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'Brak notatek. Dotknij +, aby dodać.';
-        listEl.appendChild(p); return;
-      }
-      [...notes].sort((a, b) => b.t - a.t).forEach(n => {
-        const lines = n.text.split('\n');
-        const title = lines[0].trim() || 'Bez tytułu';
-        const rest = lines.slice(1).join(' ').trim();
-        const b = document.createElement('button'); b.className = 'note'; b.dataset.id = n.id;
-        const t = document.createElement('b'); t.textContent = title;
-        const s = document.createElement('span');
-        s.textContent = new Date(n.t).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' }) + (rest ? ' · ' + rest : '');
-        b.append(t, s); listEl.appendChild(b);
-      });
-    };
-    const open = n => {
-      current = n; ta.value = n.text;
-      view.hidden = true; edit.hidden = false; ta.focus();
-    };
-    const close = () => {
-      if (current && !current.text.trim()) notes = notes.filter(n => n !== current);
-      current = null; save(); render();
-      edit.hidden = true; view.hidden = false;
-    };
-    root.querySelector('.fab').addEventListener('click', () => {
-      const n = { id: Date.now().toString(36), text: '', t: Date.now() };
-      notes.push(n); open(n);
-    });
-    listEl.addEventListener('click', e => {
-      const b = e.target.closest('.note');
-      if (b) open(notes.find(n => n.id === b.dataset.id));
-    });
-    ta.addEventListener('input', () => { current.text = ta.value; current.t = Date.now(); save(); });
-    edit.querySelector('.back-list').addEventListener('click', close);
-    edit.querySelector('.del').addEventListener('click', () => { current.text = ''; close(); });
-    render();
-    return () => {};
-  }
-
-  /* ---------- Pogoda (dane przykładowe, bez sieci) ---------- */
-  function initWeather(root) {
-    const CITIES = { 'Gdynia': 0, 'Gdańsk': 0, 'Warszawa': 1, 'Kraków': 1.5, 'Wrocław': 1 };
-    const AVG = [-1, 0, 4, 9, 14, 17, 20, 19, 14, 9, 4, 1];
-    const LBL = { '☀️': 'Słonecznie', '⛅': 'Częściowe zachmurzenie', '☁️': 'Pochmurno', '🌦️': 'Przelotny deszcz', '🌧️': 'Deszcz', '❄️': 'Śnieg' };
-    const rnd = s => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; };
-    const city = 'Gdynia'; // jedna, domyślna lokalizacja
-    root.innerHTML = '<p class="wx-loc">📍 Twoja lokalizacja</p>' +
-      '<div class="wx-now"></div><p class="section-title">Prognoza na 5 dni</p><div class="list wx-days"></div>' +
-      '<p class="section-title" style="margin-top:14px">Dane przykładowe, generowane lokalnie.</p>';
-    const now = root.querySelector('.wx-now'), days = root.querySelector('.wx-days');
-    
-    const render = () => {
-      days.textContent = '';
-      for (let i = 0; i < 5; i++) {
-        const d = new Date(Date.now() + i * 864e5), key = city + d.toDateString();
-        const t = Math.round(AVG[d.getMonth()] + CITIES[city] + (rnd(key + 't') - .5) * 8), r = rnd(key + 'c');
-        const ic = (t < 1 && r > .5) ? '❄️' : r < .3 ? '☀️' : r < .55 ? '⛅' : r < .75 ? '☁️' : r < .9 ? '🌦️' : '🌧️';
-        const hi = t + Math.round(rnd(key + 'h') * 3) + 1, lo = t - Math.round(rnd(key + 'l') * 3) - 1;
-        if (i === 0) {
-          now.innerHTML = '<div class="ico">' + ic + '</div><div class="big">' + t + '°</div><div class="lbl">' + LBL[ic] + '</div>';
-        }
-        const row = document.createElement('div'); row.className = 'wx-row';
-        const name = i === 0 ? 'Dziś' : d.toLocaleDateString('pl-PL', { weekday: 'long' });
-        row.innerHTML = '<span class="d"></span><span class="i">' + ic + '</span><span class="t">' + hi + '° <small>' + lo + '°</small></span>';
-        row.querySelector('.d').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-        days.appendChild(row);
-      }
-    };
-    
-    render();
-    return () => {};
-  }
-
-  /* ---------- Przeglądarka ---------- */
-  function initBrowser(root) {
-    const SITES = [['Wikipedia', 'https://pl.wikipedia.org'], ['DuckDuckGo', 'https://duckduckgo.com'], ['OpenStreetMap', 'https://www.openstreetmap.org'], ['Example', 'https://example.com']];
-    const hist = []; let pos = -1;
-    root.innerHTML = '<div class="br-bar">' +
-      '<button class="br-b" data-a="home" aria-label="Start">⌂</button>' +
-      '<button class="br-b" data-a="back" aria-label="Wstecz">‹</button>' +
-      '<button class="br-b" data-a="fwd" aria-label="Dalej">›</button>' +
-      '<input class="br-url" type="text" inputmode="url" aria-label="Adres lub wyszukiwanie" placeholder="Szukaj lub wpisz adres">' +
-      '<button class="br-b" data-a="ext" aria-label="Otwórz w nowej karcie">↗</button></div>' +
-      '<div class="br-home"><p class="section-title">Skróty</p><div class="list"></div></div>' +
-      '<iframe class="br-frame" hidden sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Strona"></iframe>' +
-      '<p class="br-note" hidden>Jeśli strona się nie wyświetla, blokuje osadzanie. Użyj ↗.</p>';
-    const url = root.querySelector('.br-url'), home = root.querySelector('.br-home'), frame = root.querySelector('.br-frame'), note = root.querySelector('.br-note');
-    const btn = a => root.querySelector('[data-a="' + a + '"]');
-    const list = home.querySelector('.list');
-    SITES.forEach(([n, u]) => { const b = document.createElement('button'); b.className = 'row'; b.dataset.u = u; b.textContent = n; list.appendChild(b); });
-    const sync = () => { btn('back').disabled = pos < 1; btn('fwd').disabled = pos >= hist.length - 1; btn('ext').disabled = pos < 0; };
-    const show = u => { frame.src = u; frame.hidden = false; note.hidden = false; home.hidden = true; url.value = u; sync(); };
-    const go = u => { hist.splice(pos + 1); hist.push(u); pos++; show(u); };
-    const norm = s => {
-      s = s.trim(); if (!s) return null;
-      if (/^https?:\/\//i.test(s)) return s;
-      if (!/\s/.test(s) && /\.[a-z]{2,}/i.test(s)) return 'https://' + s;
-      return 'https://duckduckgo.com/?q=' + encodeURIComponent(s);
-    };
-    url.addEventListener('keydown', e => { if (e.key === 'Enter') { const u = norm(url.value); if (u) go(u); } });
-    root.addEventListener('click', e => {
-      const s = e.target.closest('[data-u]'); if (s) return go(s.dataset.u);
-      const b = e.target.closest('[data-a]'); if (!b) return;
-      const a = b.dataset.a;
-      if (a === 'home') { hist.length = 0; pos = -1; frame.src = 'about:blank'; frame.hidden = true; note.hidden = true; home.hidden = false; url.value = ''; sync(); }
-      else if (a === 'back' && pos > 0) show(hist[--pos]);
-      else if (a === 'fwd' && pos < hist.length - 1) show(hist[++pos]);
-      else if (a === 'ext' && pos >= 0) window.open(hist[pos], '_blank', 'noopener');
-    });
-    sync();
-    return () => {};
-  }
-
-  /* ---------- YouWideo ---------- */
-  function initYouwideo(root) {
-    let vids = [];
-    try { vids = JSON.parse(store.get('ywvids', 'null')); } catch (e) {}
-    if (!Array.isArray(vids)) vids = [
-      { id: 'YE7VzlLtp-4', title: 'Big Buck Bunny' },
-      { id: 'jNQXAC9IVRw', title: 'Me at the zoo' },
-      { id: 'dQw4w9WgXcQ', title: 'Rick Astley – Never Gonna Give You Up' },
-      { id: '9bZkp7q19f0', title: 'PSY – Gangnam Style' },
-    ];
-    root.innerHTML = '<div class="yw-list"><div class="yw-add"><input class="yw-in" type="text" aria-label="Link do filmu" placeholder="Wklej link do filmu"><button class="btn yw-addbtn">Dodaj</button></div><div class="note-list"></div></div>' +
-      '<div class="yw-player" hidden><div class="note-bar"><button class="btn yw-back">‹ Lista</button><button class="btn yw-ext">YouTube ↗</button><button class="btn danger yw-del">Usuń</button></div>' +
-      '<iframe allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Odtwarzacz"></iframe><p class="yw-title"></p></div>';
-    const list = root.querySelector('.note-list'), lv = root.querySelector('.yw-list'), pv = root.querySelector('.yw-player');
-    const inp = root.querySelector('.yw-in'), fr = pv.querySelector('iframe'), ttl = pv.querySelector('.yw-title');
-    let cur = null;
-    const save = () => store.set('ywvids', JSON.stringify(vids));
-    const render = () => {
-      list.textContent = '';
-      if (!vids.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'Brak filmów. Wklej link powyżej.'; list.appendChild(p); return; }
-      vids.forEach(v => {
-        const b = document.createElement('button'); b.className = 'note'; b.dataset.id = v.id;
-        const t = document.createElement('b'); t.textContent = '▶ ' + v.title;
-        const s = document.createElement('span'); s.textContent = 'youtube.com/watch?v=' + v.id;
-        b.append(t, s); list.appendChild(b);
-      });
-    };
-    const play = v => { cur = v; fr.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?rel=0'; ttl.textContent = v.title; lv.hidden = true; pv.hidden = false; };
-    const stop = () => { fr.src = 'about:blank'; cur = null; pv.hidden = true; lv.hidden = false; };
-    const parse = s => {
-      s = s.trim();
-      const m = s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
-      if (m) return m[1];
-      return /^[\w-]{11}$/.test(s) ? s : null;
-    };
-    const add = () => {
-      const id = parse(inp.value);
-      if (!id) { inp.value = ''; inp.placeholder = 'Nieprawidłowy link lub ID'; return; }
-      if (!vids.some(v => v.id === id)) { vids.push({ id, title: 'Film ' + id }); save(); render(); }
-      inp.value = ''; inp.placeholder = 'Wklej link do filmu';
-    };
-    root.querySelector('.yw-addbtn').addEventListener('click', add);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
-    list.addEventListener('click', e => { const b = e.target.closest('.note'); if (b) play(vids.find(v => v.id === b.dataset.id)); });
-    pv.querySelector('.yw-back').addEventListener('click', stop);
-    pv.querySelector('.yw-ext').addEventListener('click', () => { if (cur) window.open('https://www.youtube.com/watch?v=' + cur.id, '_blank', 'noopener'); });
-    pv.querySelector('.yw-del').addEventListener('click', () => { const c = cur; stop(); vids = vids.filter(v => v !== c); save(); render(); });
-    render();
-    return () => {};
-  }
-
-  /* ---------- SKLEPHEJ: instalacja i odinstalowanie ---------- */
-  const APPS = {
-    calc:  { name: 'Kalkulator', cat: 'Narzędzia',      color: '#ff7043', glyph: '=', init: initCalc,  bodyClass: 'calc' },
-    notes: { name: 'Notatki',    cat: 'Produktywność', color: '#f9a825', glyph: '✎', init: initNotes, bodyClass: 'notes' },
-    weather: { name: 'Pogoda',   cat: 'Styl życia',    color: '#29b6f6', glyph: '☀', init: initWeather, bodyClass: 'weather' },
-    browser: { name: 'Przeglądarka', cat: 'Internet', color: '#5c6bc0', glyph: '◎', init: initBrowser, bodyClass: 'browser' },
-    youwideo: { name: 'YouWideo', cat: 'Wideo', color: '#e53935', glyph: '▶', init: initYouwideo, bodyClass: 'yw' },
-  };
-  const BACK_SVG = '<svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>';
-  let installed = [];
-  try { installed = JSON.parse(store.get('apps', '[]')).filter(id => APPS[id]); } catch (e) {}
-  if (!installed.length && store.get('calc') === '1') installed = ['calc']; // zgodność ze starą wersją
-  const destroyers = {};
-  const storeList = document.getElementById('storeList');
-
-  function renderStore() {
-    storeList.textContent = '';
-    Object.entries(APPS).forEach(([id, a]) => {
-      const on = installed.includes(id);
-      const card = document.createElement('div'); card.className = 'store-card';
-      card.innerHTML = '<div class="icon"></div><div class="meta"><b></b><small></small></div><button class="btn"></button>';
-      const ic = card.querySelector('.icon'); ic.style.background = a.color; ic.textContent = a.glyph;
-      card.querySelector('b').textContent = a.name;
-      card.querySelector('small').textContent = a.cat;
-      const btn = card.querySelector('.btn');
-      btn.dataset.store = id;
-      btn.textContent = on ? 'Odinstaluj' : 'Zainstaluj';
-      btn.classList.toggle('danger', on);
-      btn.setAttribute('aria-label', (on ? 'Odinstaluj ' : 'Zainstaluj ') + a.name);
-      storeList.appendChild(card);
-    });
-  }
-  function mountApp(id) {
-    const a = APPS[id];
-    const appBtn = document.createElement('button');
-    appBtn.className = 'app'; appBtn.id = 'app-' + id; appBtn.dataset.open = 'win-' + id;
-    appBtn.innerHTML = '<div class="icon"></div><span></span>';
-    const ic = appBtn.querySelector('.icon');
-    ic.style.cssText = 'background:' + a.color + ';color:#fff;font-size:26px;font-weight:500';
-    ic.textContent = a.glyph;
-    appBtn.querySelector('span').textContent = a.name;
-    document.querySelector('.apps').appendChild(appBtn);
-    const w = document.createElement('div');
-    w.className = 'window'; w.id = 'win-' + id;
-    w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', a.name); w.setAttribute('aria-hidden', 'true');
-    w.innerHTML = '<header><button class="back" data-close="win-' + id + '" aria-label="Wróć">' + BACK_SVG + '</button><span></span></header><div class="body ' + a.bodyClass + '"></div>';
-    w.querySelector('header span').textContent = a.name;
-    document.getElementById('navPill').before(w);
-    destroyers[id] = a.init(w.querySelector('.body'));
-  }
-  function installApp(id) {
-    if (installed.includes(id)) return;
-    installed.push(id); mountApp(id);
-    store.set('apps', JSON.stringify(installed)); renderStore();
-  }
-  function uninstallApp(id) {
-    if (!installed.includes(id)) return;
-    setOpen('win-' + id, false);
-    if (destroyers[id]) destroyers[id]();
-    delete destroyers[id];
-    document.getElementById('win-' + id)?.remove();
-    document.getElementById('app-' + id)?.remove();
-    installed = installed.filter(x => x !== id);
-    store.set('apps', JSON.stringify(installed)); renderStore();
-  }
-  storeList.addEventListener('click', e => {
-    const b = e.target.closest('[data-store]');
-    if (!b) return;
-    const id = b.dataset.store;
-    installed.includes(id) ? uninstallApp(id) : installApp(id);
+  // Włączanie wyłączonego telefonu: Ctrl+Alt+P albo przytrzymanie ekranu przez 2 s
+  document.addEventListener('keydown', e => {
+    if (power.dataset.state === 'off' && e.ctrlKey && e.altKey && e.code === 'KeyP') { e.preventDefault(); boot(); }
   });
-  installed.forEach(mountApp);
-  renderStore();
+  let holdTimer;
+  power.addEventListener('pointerdown', () => {
+    if (power.dataset.state !== 'off') return;
+    holdTimer = setTimeout(boot, 2000);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
 
-  document.getElementById('navPill').addEventListener('click', closeAll);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTop(); });
+  boot(); // start strony = uruchomienie telefonu
 </script>
 </body>
 </html>
