@@ -202,6 +202,13 @@
   .bframe { flex: 1; width: 100%; border: 0; background: #fff; }
   .bnote { padding: 8px 12px; font-size: 12px; text-align: center; background: var(--card); color: var(--muted); border-top: 1px solid var(--line); }
   .bnote a { color: var(--accent); }
+  /* wiadomosci */
+  .chatbody { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+  #msgs { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+  .msg { max-width: 78%; padding: 8px 12px; border-radius: 16px; background: var(--card); align-self: flex-start; word-break: break-word; }
+  .msg.me { align-self: flex-end; background: var(--accent); color: #fff; }
+  .phone[data-theme="dark"] .msg.me { color: #121214; }
+  .msg small { display: block; font-size: 11px; opacity: .7; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -247,6 +254,10 @@
       <button class="app" data-open="win-browser">
         <div class="icon" style="background:#1e88e5"><svg viewBox="0 0 24 24" style="fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
         <span>Przeglądarka</span>
+      </button>
+      <button class="app" data-open="win-sms">
+        <div class="icon" style="background:#00acc1"><svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg></div>
+        <span>Wiadomości</span>
       </button>
     </section>
 
@@ -420,6 +431,32 @@
         </div>
         <iframe class='bframe' id='bFrame' title='Strona' hidden referrerpolicy='no-referrer' sandbox='allow-scripts allow-forms allow-same-origin allow-popups'></iframe>
         <div class='bnote' id='bNote' hidden>Strona się nie ładuje? Wiele serwisów blokuje osadzanie. <a id='bExt' target='_blank' rel='noopener'>Otwórz w nowej karcie</a></div>
+      </div>
+    </div>
+
+    <!-- WIADOMOŚCI -->
+    <div class='window' id='win-sms' role='dialog' aria-label='Wiadomości' aria-hidden='true'>
+      <header>
+        <button class='back' data-close='win-sms' aria-label='Wróć'><svg viewBox='0 0 24 24'><path d='M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z'/></svg></button>
+        <span>Wiadomości</span>
+      </header>
+      <div class='body'>
+        <p class='bhint' id='smsInfo' style='margin-bottom:12px'></p>
+        <div class='taskadd' style='margin-bottom:18px'><input class='ntitlein' id='smsTo' type='tel' inputmode='tel' maxlength='12' placeholder='Numer odbiorcy, np. 600-123' aria-label='Numer odbiorcy'><button class='cbtn main' id='smsGo'>Pisz</button></div>
+        <div class='list' id='smsList' hidden></div>
+        <p class='section-title' id='smsEmpty'>Brak rozmów. Wpisz numer i napisz pierwszą wiadomość.</p>
+      </div>
+    </div>
+
+    <div class='window' id='win-chat' role='dialog' aria-label='Rozmowa' aria-hidden='true'>
+      <header>
+        <button class='back' data-close='win-chat' aria-label='Wróć'><svg viewBox='0 0 24 24'><path d='M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z'/></svg></button>
+        <span id='smsTitle'>Rozmowa</span>
+      </header>
+      <div class='body chatbody'>
+        <div id='msgs' aria-live='polite'></div>
+        <p class='bhint' id='smsStat'></p>
+        <div class='taskadd' style='margin-bottom:0'><input class='ntitlein' id='smsIn' maxlength='500' placeholder='Napisz wiadomość…' aria-label='Wiadomość'><button class='cbtn main' id='smsSend'>Wyślij</button></div>
       </div>
     </div>
 
@@ -840,6 +877,70 @@
   $('bHome').addEventListener('click', e => { const b = e.target.closest('[data-url]'); if (b) { beep(520, .05); bGo(b.dataset.url); } });
   bShow();
 
+  /* ---------- Wiadomości ---------- */
+  /* Tryb online: wklej adres Firebase Realtime Database, np. 'https://projekt-default-rtdb.europe-west1.firebasedatabase.app'. Puste = tryb lokalny. */
+  const SMS_DB = '';
+  let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
+  let smsCur = '';
+  const smsSeen = new Set();
+  const saveSms = () => store.set('sms', JSON.stringify(sms));
+  const smsNum = () => { let n = store.get('phone-num', '') || store.get('sms-num', ''); if (!n) { n = '600-' + String(Math.floor(Math.random() * 900) + 100); store.set('sms-num', n); } return n; };
+  const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
+  const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  function smsInfo() { $('smsInfo').textContent = 'Twój numer: ' + smsNum() + ' · ' + (SMS_DB ? 'tryb online' : 'tryb lokalny (wiadomości zostają na tym urządzeniu; możesz napisać do siebie)'); }
+  function smsList() {
+    const last = k => sms[k].m[sms[k].m.length - 1];
+    const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
+    $('smsList').hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
+    $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span></button>`).join('');
+    [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = keys[i]; b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
+  }
+  function smsDraw() {
+    const box = $('msgs'); box.innerHTML = '';
+    ((sms[smsCur] || {}).m || []).forEach(g => { const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : ''); d.textContent = g.x; const s = document.createElement('small'); s.textContent = smsTime(g.t); d.appendChild(s); box.appendChild(d); });
+    box.scrollTop = box.scrollHeight;
+  }
+  function smsAdd(num, from, text, t) {
+    const c = sms[num] = sms[num] || { m: [], u: 0 }, seen = smsCur === num && $('win-chat').classList.contains('open');
+    c.m.push({ f: from, x: text, t }); if (from === 'them' && !seen) c.u++;
+    saveSms(); smsList(); if (seen) smsDraw();
+  }
+  function smsOpen(num) { smsCur = num; $('smsStat').textContent = ''; if (sms[num]) { sms[num].u = 0; saveSms(); } $('smsTitle').textContent = num; smsDraw(); smsList(); setOpen('win-chat', true); }
+  async function smsSend() {
+    const x = $('smsIn').value.trim(); if (!x || !smsCur) return;
+    $('smsIn').value = ''; $('smsStat').textContent = '';
+    const to = smsCur, me = smsNum(), t = Date.now();
+    smsAdd(to, 'me', x, t); beep(760, .05);
+    if (SMS_DB) {
+      try { const r = await fetch(SMS_DB + '/inbox/' + to + '.json', { method: 'POST', body: JSON.stringify({ f: me, x, t }) }); if (!r.ok) throw new Error('http'); }
+      catch (e) { $('smsStat').textContent = 'Nie udało się wysłać ostatniej wiadomości (brak sieci lub serwera).'; }
+    } else if (to === me) smsAdd(to, 'them', x, Date.now());
+  }
+  async function smsPoll() {
+    if (!SMS_DB || $('power').dataset.state === 'off') return;
+    try {
+      const me = smsNum(), r = await fetch(SMS_DB + '/inbox/' + me + '.json', { cache: 'no-store' }); if (!r.ok) return;
+      const d = await r.json(); if (!d) return;
+      let got = false;
+      for (const k of Object.keys(d)) {
+        const g = d[k]; if (smsSeen.has(k) || !g || typeof g.x !== 'string') continue;
+        smsSeen.add(k); smsAdd(smsNorm(g.f || '') || '???', 'them', g.x.slice(0, 500), Number(g.t) || Date.now()); got = true;
+        try { await fetch(SMS_DB + '/inbox/' + me + '/' + k + '.json', { method: 'DELETE' }); } catch (e) {}
+      }
+      if (got) { beep(880, .1); buzz([60, 40, 60]); }
+    } catch (e) {}
+  }
+  function smsGo() { const n = smsNorm($('smsTo').value); if (!n) return; $('smsTo').value = ''; smsOpen(n); }
+  $('smsGo').addEventListener('click', smsGo);
+  $('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
+  $('smsSend').addEventListener('click', smsSend);
+  $('smsIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsSend(); } });
+  $('smsList').addEventListener('click', e => { const b = e.target.closest('.nitem'); if (b) { beep(520, .06); smsOpen(b.dataset.n); } });
+  $('win-chat').querySelector('[data-close]').addEventListener('click', () => { smsCur = ''; });
+  document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
+  smsInfo(); smsList();
+  if (SMS_DB) { setInterval(smsPoll, 3000); smsPoll(); }
+
   /* ---------- Rysowanie ---------- */
   const dc = $('dCanvas'), dx = dc.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
   dc.width = Math.round((dc.clientWidth || 350) * dpr); dc.height = Math.round((dc.clientHeight || 340) * dpr);
@@ -982,7 +1083,7 @@
   $('restartBtn').addEventListener('click', boot);
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('Przywrócić ustawienia domyślne? Odcisk palca też zostanie usunięty.')) return;
-    ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall','cal','alarms','notesapp','drawing'].forEach(store.del);
+    ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall','cal','alarms','notesapp','drawing','sms','sms-num'].forEach(store.del);
     location.reload();
   });
 
