@@ -625,49 +625,37 @@
     });
   }
 
-  /* ---------- Numer telefonu przypisany do IP ---------- */
-  const numEl = $('phoneNum');
-  const IP_NUMBERS = { /* '83.12.34.56': '600-001', */ };
-  function ipToNumber(ip) {
-    if (IP_NUMBERS[ip]) return IP_NUMBERS[ip];
-    let h = 2166136261;
-    for (const c of ip) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
-    return '600-' + String((h >>> 0) % 999 + 1).padStart(3, '0');
+/* ---------- Numer telefonu (unikalny, z Firebase) ---------- */
+const numEl = $('phoneNum');
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+let fbResolve;
+const fbReady = new Promise(r => { fbResolve = r; });
+window.__fbResolve = fbResolve;
+
+async function fetchIp() {
+  try {
+    const r = await withTimeout(fetch('https://api64.ipify.org?format=json', { cache: 'no-store' }), 5000);
+    return (await r.json()).ip || null;
+  } catch (e) { return null; }
+}
+function showNum(num) { numEl.textContent = 'Nr tel.: ' + num; $('infoNum').textContent = num; }
+let phoneBusy = false;
+async function initPhoneNumber() {
+  if (phoneBusy) return; phoneBusy = true;
+  const cached = store.get('phone-num', '');
+  if (cached) showNum(cached); else numEl.textContent = 'Nr tel.: łączenie…';
+  fetchIp().then(ip => { $('infoIp').textContent = ip || 'brak sieci'; });
+  try {
+    const fb = await withTimeout(fbReady, 8000);
+    const num = await withTimeout(fb.claimNumber(cached), 15000);
+    store.set('phone-num', num); showNum(num); smsInfo(); smsListen();
+  } catch (e) {
+    if (!cached) { numEl.textContent = 'Nr tel.: brak sieci'; $('infoNum').textContent = 'brak sieci'; }
   }
-  async function fetchIp() {
-    const sources = [
-      ['https://api64.ipify.org?format=json', r => r.json().then(j => j.ip)],
-      ['https://api.ipify.org?format=json', r => r.json().then(j => j.ip)],
-      ['https://www.cloudflare.com/cdn-cgi/trace', r => r.text().then(t => (t.match(/^ip=(.+)$/m) || [])[1])],
-    ];
-    for (const [url, parse] of sources) {
-      try {
-        const ctl = new AbortController();
-        const to = setTimeout(() => ctl.abort(), 5000);
-        const res = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
-        clearTimeout(to);
-        if (!res.ok) continue;
-        const ip = (await parse(res) || '').trim();
-        if (ip) return ip;
-      } catch (e) {}
-    }
-    return null;
-  }
-  function showNum(num, ip) {
-    numEl.textContent = 'Nr tel.: ' + num; $('infoNum').textContent = num;
-    if (ip) { numEl.title = 'IP: ' + ip; $('infoIp').textContent = ip; }
-  }
-  async function initPhoneNumber() {
-    const cached = store.get('phone-num', '');
-    if (cached) showNum(cached, store.get('phone-ip', ''));
-    const ip = await fetchIp();
-    if (ip) {
-      const num = ipToNumber(ip);
-      store.set('phone-ip', ip); store.set('phone-num', num); showNum(num, ip);
-    } else if (!cached) { numEl.textContent = 'Nr tel.: brak sieci'; $('infoNum').textContent = 'brak sieci'; $('infoIp').textContent = 'brak sieci'; }
-  }
-  initPhoneNumber();
-  window.addEventListener('online', initPhoneNumber);
+  phoneBusy = false;
+}
+initPhoneNumber();
+window.addEventListener('online', initPhoneNumber);
 
   /* ---------- Okna ---------- */
   const setOpen = (id, on) => {
@@ -877,69 +865,70 @@
   $('bHome').addEventListener('click', e => { const b = e.target.closest('[data-url]'); if (b) { beep(520, .05); bGo(b.dataset.url); } });
   bShow();
 
-  /* ---------- Wiadomości ---------- */
-  /* Tryb online: wklej adres Firebase Realtime Database, np. 'https://projekt-default-rtdb.europe-west1.firebasedatabase.app'. Puste = tryb lokalny. */
-  const SMS_DB = '';
-  let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
-  let smsCur = '';
-  const smsSeen = new Set();
-  const saveSms = () => store.set('sms', JSON.stringify(sms));
-  const smsNum = () => { let n = store.get('phone-num', '') || store.get('sms-num', ''); if (!n) { n = '600-' + String(Math.floor(Math.random() * 900) + 100); store.set('sms-num', n); } return n; };
-  const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
-  const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-  function smsInfo() { $('smsInfo').textContent = 'Twój numer: ' + smsNum() + ' · ' + (SMS_DB ? 'tryb online' : 'tryb lokalny (wiadomości zostają na tym urządzeniu; możesz napisać do siebie)'); }
-  function smsList() {
-    const last = k => sms[k].m[sms[k].m.length - 1];
-    const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
-    $('smsList').hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
-    $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span></button>`).join('');
-    [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = keys[i]; b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
-  }
-  function smsDraw() {
-    const box = $('msgs'); box.innerHTML = '';
-    ((sms[smsCur] || {}).m || []).forEach(g => { const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : ''); d.textContent = g.x; const s = document.createElement('small'); s.textContent = smsTime(g.t); d.appendChild(s); box.appendChild(d); });
-    box.scrollTop = box.scrollHeight;
-  }
-  function smsAdd(num, from, text, t) {
-    const c = sms[num] = sms[num] || { m: [], u: 0 }, seen = smsCur === num && $('win-chat').classList.contains('open');
-    c.m.push({ f: from, x: text, t }); if (from === 'them' && !seen) c.u++;
-    saveSms(); smsList(); if (seen) smsDraw();
-  }
-  function smsOpen(num) { smsCur = num; $('smsStat').textContent = ''; if (sms[num]) { sms[num].u = 0; saveSms(); } $('smsTitle').textContent = num; smsDraw(); smsList(); setOpen('win-chat', true); }
-  async function smsSend() {
-    const x = $('smsIn').value.trim(); if (!x || !smsCur) return;
-    $('smsIn').value = ''; $('smsStat').textContent = '';
-    const to = smsCur, me = smsNum(), t = Date.now();
-    smsAdd(to, 'me', x, t); beep(760, .05);
-    if (SMS_DB) {
-      try { const r = await fetch(SMS_DB + '/inbox/' + to + '.json', { method: 'POST', body: JSON.stringify({ f: me, x, t }) }); if (!r.ok) throw new Error('http'); }
-      catch (e) { $('smsStat').textContent = 'Nie udało się wysłać ostatniej wiadomości (brak sieci lub serwera).'; }
-    } else if (to === me) smsAdd(to, 'them', x, Date.now());
-  }
-  async function smsPoll() {
-    if (!SMS_DB || $('power').dataset.state === 'off') return;
-    try {
-      const me = smsNum(), r = await fetch(SMS_DB + '/inbox/' + me + '.json', { cache: 'no-store' }); if (!r.ok) return;
-      const d = await r.json(); if (!d) return;
-      let got = false;
-      for (const k of Object.keys(d)) {
-        const g = d[k]; if (smsSeen.has(k) || !g || typeof g.x !== 'string') continue;
-        smsSeen.add(k); smsAdd(smsNorm(g.f || '') || '???', 'them', g.x.slice(0, 500), Number(g.t) || Date.now()); got = true;
-        try { await fetch(SMS_DB + '/inbox/' + me + '/' + k + '.json', { method: 'DELETE' }); } catch (e) {}
-      }
-      if (got) { beep(880, .1); buzz([60, 40, 60]); }
-    } catch (e) {}
-  }
-  function smsGo() { const n = smsNorm($('smsTo').value); if (!n) return; $('smsTo').value = ''; smsOpen(n); }
-  $('smsGo').addEventListener('click', smsGo);
-  $('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
-  $('smsSend').addEventListener('click', smsSend);
-  $('smsIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsSend(); } });
-  $('smsList').addEventListener('click', e => { const b = e.target.closest('.nitem'); if (b) { beep(520, .06); smsOpen(b.dataset.n); } });
-  $('win-chat').querySelector('[data-close]').addEventListener('click', () => { smsCur = ''; });
-  document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
-  smsInfo(); smsList();
-  if (SMS_DB) { setInterval(smsPoll, 3000); smsPoll(); }
+  /* ---------- Wiadomości (Firebase) ---------- */
+let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
+let smsCur = '';
+const smsIds = new Set();
+Object.values(sms).forEach(c => c.m.forEach(g => g.i && smsIds.add(g.i)));
+const saveSms = () => store.set('sms', JSON.stringify(sms));
+const smsNum = () => store.get('phone-num', '');
+const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 3 ? '600-' + d : d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
+const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+function smsInfo() { const n = smsNum(); $('smsInfo').textContent = n ? 'Twój numer: ' + n + ' · online' : 'Łączenie z siecią…'; }
+function smsList() {
+  const last = k => sms[k].m[sms[k].m.length - 1];
+  const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
+  $('smsList').hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
+  $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span></button>`).join('');
+  [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = keys[i]; b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
+}
+function smsDraw() {
+  const box = $('msgs'); box.innerHTML = '';
+  ((sms[smsCur] || {}).m || []).forEach(g => { const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : ''); d.textContent = g.x; const s = document.createElement('small'); s.textContent = smsTime(g.t); d.appendChild(s); box.appendChild(d); });
+  box.scrollTop = box.scrollHeight;
+}
+function smsAdd(num, from, text, t, id) {
+  if (id) { if (smsIds.has(id)) return false; smsIds.add(id); }
+  const c = sms[num] = sms[num] || { m: [], u: 0 }, seen = smsCur === num && $('win-chat').classList.contains('open');
+  c.m.push({ f: from, x: text, t, i: id }); c.m.sort((a, b) => a.t - b.t);
+  if (from === 'them' && !seen) c.u++;
+  saveSms(); smsList(); if (seen) smsDraw();
+  return true;
+}
+function smsOpen(num) { smsCur = num; $('smsStat').textContent = ''; if (sms[num]) { sms[num].u = 0; saveSms(); } $('smsTitle').textContent = num; smsDraw(); smsList(); setOpen('win-chat', true); }
+async function smsSend() {
+  const x = $('smsIn').value.trim(), me = smsNum();
+  if (!x || !smsCur) return;
+  if (!me) { $('smsStat').textContent = 'Brak numeru telefonu. Sprawdź połączenie z internetem.'; return; }
+  let fb;
+  try { fb = await withTimeout(fbReady, 8000); }
+  catch (e) { $('smsStat').textContent = 'Brak połączenia z serwerem. Spróbuj ponownie.'; return; }
+  $('smsIn').value = ''; $('smsStat').textContent = '';
+  const to = smsCur, t = Date.now(), id = fb.newId();
+  smsAdd(to, 'me', x, t, id); beep(760, .05);
+  try { await withTimeout(fb.send(id, me, to, x, t), 10000); }
+  catch (e) { $('smsStat').textContent = 'Nie udało się potwierdzić wysłania. Sprawdź internet.'; }
+}
+let smsLN = '', smsUnsub = null;
+function smsListen() {
+  const me = smsNum(); if (!me || me === smsLN) return;
+  smsLN = me; if (smsUnsub) { smsUnsub(); smsUnsub = null; }
+  fbReady.then(fb => {
+    if (smsLN !== me) return;
+    smsUnsub = fb.listen(me, (id, from, x, t) => {
+      if (smsAdd(smsNorm(from) || '???', 'them', String(x).slice(0, 500), t || Date.now(), id) && $('power').dataset.state !== 'off') { beep(880, .1); buzz([60, 40, 60]); }
+    });
+  }).catch(() => { smsLN = ''; });
+}
+function smsGo() { const n = smsNorm($('smsTo').value); if (!n) return; $('smsTo').value = ''; smsOpen(n); }
+$('smsGo').addEventListener('click', smsGo);
+$('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
+$('smsSend').addEventListener('click', smsSend);
+$('smsIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsSend(); } });
+$('smsList').addEventListener('click', e => { const b = e.target.closest('.nitem'); if (b) { beep(520, .06); smsOpen(b.dataset.n); } });
+$('win-chat').querySelector('[data-close]').addEventListener('click', () => { smsCur = ''; });
+document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
+smsInfo(); smsList();
 
   /* ---------- Rysowanie ---------- */
   const dc = $('dCanvas'), dx = dc.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1097,4 +1086,62 @@
   boot();
 </script>
 </body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+  import { getFirestore, collection, doc, runTransaction, setDoc, query, where, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyAg3xZArQs19uU6qBv70e469R-9xe5W0mI",
+    authDomain: "webosmemory.firebaseapp.com",
+    projectId: "webosmemory",
+    storageBucket: "webosmemory.firebasestorage.app",
+    messagingSenderId: "298781278310",
+    appId: "1:298781278310:web:65d1adb31b88c0a8db6da7"
+  });
+  const db = getFirestore(app);
+
+  // Stały identyfikator tego urządzenia (zapamiętany w przeglądarce)
+  let devId = null;
+  try {
+    devId = localStorage.getItem('device-id');
+    if (!devId) {
+      devId = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2));
+      localStorage.setItem('device-id', devId);
+    }
+  } catch (e) {}
+  if (!devId) devId = 'tmp-' + Math.random().toString(36).slice(2);
+
+  // Rezerwuje końcówkę numeru. Zwraca true, jeśli jest wolna albo już należy do tego urządzenia.
+  function claim(suffix) {
+    const ref = doc(db, 'urzadzenia', suffix);
+    return runTransaction(db, async (t) => {
+      const snap = await t.get(ref);
+      if (snap.exists()) return snap.data().id === devId;
+      t.set(ref, { id: devId, t: Date.now() });
+      return true;
+    });
+  }
+
+  async function claimNumber(cached) {
+    const m = /^600-(\d{3})$/.exec(cached || '');
+    if (m && await claim(m[1])) return cached;
+    for (let i = 0; i < 80; i++) {
+      const s = String(Math.floor(Math.random() * 900) + 100);
+      if (await claim(s)) return '600-' + s;
+    }
+    throw new Error('Brak wolnych numerów');
+  }
+
+  window.__fbResolve({
+    claimNumber,
+    newId: () => doc(collection(db, 'sms')).id,
+    send: (id, from, to, x, t) => setDoc(doc(db, 'sms', id), { from, to, x, t }),
+    listen: (me, cb) => onSnapshot(query(collection(db, 'sms'), where('to', '==', me)), (snap) => {
+      snap.docChanges().forEach((ch) => {
+        if (ch.type === 'added') { const d = ch.doc.data(); cb(ch.doc.id, d.from, d.x, d.t); }
+      });
+    })
+  });
+</script>
 </html>
