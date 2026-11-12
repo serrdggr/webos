@@ -1058,17 +1058,26 @@ smsInfo(); smsList();
 /* ---------- Zasilanie i uruchamianie ---------- */
 const power = $('power'), bootStatus = $('bootStatus');
 
-/* Logo: biały smok z 4 kawałków (wstawiane ze skryptu) */
+/* Logo: biały smok z 4 kawałków, wlatuje z rogów i pulsuje poświatą */
 (() => {
   const css = document.createElement('style');
   css.textContent = `
-    .boot-logo{width:110px;height:auto;display:block;margin:0 auto 18px}
-    .boot-logo .piece{opacity:0}
-    #power[data-state="boot"] .boot-logo .piece{animation:pieceIn .45s ease forwards}
-    #power[data-state="boot"] .boot-logo .piece:nth-of-type(2){animation-delay:.35s}
-    #power[data-state="boot"] .boot-logo .piece:nth-of-type(3){animation-delay:.7s}
-    #power[data-state="boot"] .boot-logo .piece:nth-of-type(4){animation-delay:1.05s}
-    @keyframes pieceIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+    .boot-logo{width:110px;height:auto;display:block;margin:0 auto 18px;overflow:visible}
+    .boot-logo .piece{opacity:0;transform-box:view-box;transform-origin:150px 135px}
+    .boot-logo .piece:nth-of-type(1){--x:-70px;--y:-70px;--r:-30deg;--d:0s}
+    .boot-logo .piece:nth-of-type(2){--x:70px;--y:-70px;--r:30deg;--d:.15s}
+    .boot-logo .piece:nth-of-type(3){--x:-70px;--y:70px;--r:30deg;--d:.3s}
+    .boot-logo .piece:nth-of-type(4){--x:70px;--y:70px;--r:-30deg;--d:.45s}
+    #power[data-state="boot"] .boot-logo .piece{
+      animation:fly .9s cubic-bezier(.2,.9,.3,1.15) var(--d) forwards}
+    #power[data-state="boot"] .boot-logo{
+      animation:glow 1.4s ease-in-out 1.6s infinite alternate}
+    @keyframes fly{
+      from{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r)) scale(1.5);filter:blur(6px)}
+      to{opacity:1;transform:none;filter:blur(0)}}
+    @keyframes glow{
+      from{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}
+      to{filter:drop-shadow(0 0 14px rgba(255,255,255,.75))}}
     #power[data-state="off"] .boot-logo{display:none}
   `;
   document.head.appendChild(css);
@@ -1095,15 +1104,26 @@ const power = $('power'), bootStatus = $('bootStatus');
   bootStatus.parentNode.insertBefore(wrap.firstElementChild, bootStatus);
 })();
 
+const BOOT_MS = 5000; // czas ładowania
 const BOOT_STEPS = ['Ładowanie systemu…', 'Zatwierdzanie konfiguracji…', 'Uruchamianie usług…', 'Wczytywanie interfejsu…'];
 let bootTimer, stepTimer;
 function boot() {
   closeAll(); lockEl.classList.remove('on');
-  power.dataset.state = 'boot';
   clearTimeout(bootTimer); clearInterval(stepTimer);
+  power.dataset.state = '';
+  void power.offsetWidth;            // restart animacji logo przy każdym uruchomieniu
+  power.dataset.state = 'boot';
   let step = 0; bootStatus.textContent = BOOT_STEPS[0];
-  stepTimer = setInterval(() => { step = Math.min(step + 1, BOOT_STEPS.length - 1); bootStatus.textContent = BOOT_STEPS[step]; }, 1250);
-  bootTimer = setTimeout(() => { clearInterval(stepTimer); power.dataset.state = ''; beep(523, .12); beep(784, .16, .12); showLock(); }, 5000);
+  stepTimer = setInterval(() => {
+    step = Math.min(step + 1, BOOT_STEPS.length - 1);
+    bootStatus.textContent = BOOT_STEPS[step];
+  }, BOOT_MS / BOOT_STEPS.length);
+  bootTimer = setTimeout(() => {
+    clearInterval(stepTimer);
+    power.dataset.state = '';
+    beep(523, .12); beep(784, .16, .12);
+    showLock();
+  }, BOOT_MS);
 }
 function shutdown() { clearTimeout(bootTimer); clearInterval(stepTimer); closeAll(); lockEl.classList.remove('on'); power.dataset.state = 'off'; }
 $('shutdownBtn').addEventListener('click', shutdown);
