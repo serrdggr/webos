@@ -1079,47 +1079,74 @@ power.style.setProperty('--boot', BOOT_MS + 'ms');
            animation-timing-function:ease-out}
       12% {opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r));
            animation-timing-function:ease-in-out}
-  // Stały identyfikator tego urządzenia (zapamiętany w przeglądarce)
-  let devId = null;
-  try {
-    devId = localStorage.getItem('device-id');
-    if (!devId) {
-      devId = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2));
-      localStorage.setItem('device-id', devId);
-    }
-  } catch (e) {}
-  if (!devId) devId = 'tmp-' + Math.random().toString(36).slice(2);
+      65% {opacity:1;transform:translate(calc(var(--x)*1.25),calc(var(--y)*1.25)) rotate(calc(var(--r)*1.4));
+           animation-timing-function:cubic-bezier(.7,0,.2,1)}
+      100%{opacity:1;transform:none}}
+    @keyframes flash{
+      0%,88%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}
+      100%  {filter:drop-shadow(0 0 16px rgba(255,255,255,.85))}}
+    #power[data-state="off"] .boot-logo{display:none}
+  `;
+  document.head.appendChild(css);
 
-  // Rezerwuje końcówkę numeru. Zwraca true, jeśli jest wolna albo już należy do tego urządzenia.
-  function claim(suffix) {
-    const ref = doc(db, 'urzadzenia', suffix);
-    return runTransaction(db, async (t) => {
-      const snap = await t.get(ref);
-      if (snap.exists()) return snap.data().id === devId;
-      t.set(ref, { id: devId, t: Date.now() });
-      return true;
-    });
-  }
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+  <svg class="boot-logo" viewBox="0 0 300 270" aria-hidden="true">
+    <defs>
+      <path id="dragonShape" fill-rule="evenodd" d="
+        M88 22 L150 66 C190 80 215 95 248 105 C260 108 264 118 261 130
+        L252 150 L236 175 C228 150 200 132 165 130 C140 128 125 140 123 158
+        C122 168 124 175 128 180 L190 238 A92 92 0 1 1 110 73 Z
+        M176 100 L202 108 C199 120 190 121 184 116 Z"/>
+      <clipPath id="q1"><rect x="0"   y="0"   width="146" height="131"/></clipPath>
+      <clipPath id="q2"><rect x="154" y="0"   width="146" height="131"/></clipPath>
+      <clipPath id="q3"><rect x="0"   y="139" width="146" height="131"/></clipPath>
+      <clipPath id="q4"><rect x="154" y="139" width="146" height="131"/></clipPath>
+    </defs>
+    <use class="piece" href="#dragonShape" fill="#fff" clip-path="url(#q1)"/>
+    <use class="piece" href="#dragonShape" fill="#fff" clip-path="url(#q2)"/>
+    <use class="piece" href="#dragonShape" fill="#fff" clip-path="url(#q3)"/>
+    <use class="piece" href="#dragonShape" fill="#fff" clip-path="url(#q4)"/>
+  </svg>`;
+  bootStatus.parentNode.insertBefore(wrap.firstElementChild, bootStatus);
+})();
 
-  async function claimNumber(cached) {
-    const m = /^600-(\d{3})$/.exec(cached || '');
-    if (m && await claim(m[1])) return cached;
-    for (let i = 0; i < 80; i++) {
-      const s = String(Math.floor(Math.random() * 900) + 100);
-      if (await claim(s)) return '600-' + s;
-    }
-    throw new Error('Brak wolnych numerów');
-  }
+const BOOT_STEPS = ['Ładowanie systemu…', 'Zatwierdzanie konfiguracji…', 'Uruchamianie usług…', 'Wczytywanie interfejsu…'];
+let bootTimer, stepTimer;
+function boot() {
+  closeAll(); lockEl.classList.remove('on');
+  clearTimeout(bootTimer); clearInterval(stepTimer);
+  power.dataset.state = '';
+  void power.offsetWidth;            // restart animacji logo przy każdym uruchomieniu
+  power.dataset.state = 'boot';
+  let step = 0; bootStatus.textContent = BOOT_STEPS[0];
+  stepTimer = setInterval(() => {
+    step = Math.min(step + 1, BOOT_STEPS.length - 1);
+    bootStatus.textContent = BOOT_STEPS[step];
+  }, BOOT_MS / BOOT_STEPS.length);
+  bootTimer = setTimeout(() => {
+    clearInterval(stepTimer);
+    power.dataset.state = '';
+    beep(523, .12); beep(784, .16, .12);
+    showLock();
+  }, BOOT_MS);
+}
+function shutdown() { clearTimeout(bootTimer); clearInterval(stepTimer); closeAll(); lockEl.classList.remove('on'); power.dataset.state = 'off'; }
+$('shutdownBtn').addEventListener('click', shutdown);
+$('restartBtn').addEventListener('click', boot);
+$('resetBtn').addEventListener('click', () => {
+  if (!confirm('Przywrócić ustawienia domyślne? Odcisk palca też zostanie usunięty.')) return;
+  ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall','cal','alarms','notesapp','drawing','sms','sms-num'].forEach(store.del);
+  location.reload();
+});
 
-  window.__fbResolve({
-    claimNumber,
-    newId: () => doc(collection(db, 'sms')).id,
-    send: (id, from, to, x, t) => setDoc(doc(db, 'sms', id), { from, to, x, t }),
-    listen: (me, cb) => onSnapshot(query(collection(db, 'sms'), where('to', '==', me)), (snap) => {
-      snap.docChanges().forEach((ch) => {
-        if (ch.type === 'added') { const d = ch.doc.data(); cb(ch.doc.id, d.from, d.x, d.t); }
-      });
-    })
-  });
+document.addEventListener('keydown', e => {
+  if (power.dataset.state === 'off' && e.ctrlKey && e.altKey && e.code === 'KeyP') { e.preventDefault(); boot(); }
+});
+let holdTimer;
+power.addEventListener('pointerdown', () => { if (power.dataset.state !== 'off') return; holdTimer = setTimeout(boot, 2000); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
+
+boot();
 </script>
 </html>
