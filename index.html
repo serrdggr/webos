@@ -865,11 +865,11 @@ window.addEventListener('online', initPhoneNumber);
   $('bHome').addEventListener('click', e => { const b = e.target.closest('[data-url]'); if (b) { beep(520, .05); bGo(b.dataset.url); } });
   bShow();
 
-/* ---------- Wiadomości (Firebase) ---------- */
+  /* ---------- Wiadomości (Firebase) ---------- */
 let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
 let smsCur = '';
 const smsIds = new Set();
-Object.values(sms).forEach(c => (c.m || []).forEach(g => g.i && smsIds.add(g.i)));
+Object.values(sms).forEach(c => c.m.forEach(g => g.i && smsIds.add(g.i)));
 const saveSms = () => store.set('sms', JSON.stringify(sms));
 const smsNum = () => store.get('phone-num', '');
 const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 3 ? '600-' + d : d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
@@ -877,54 +877,15 @@ const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', 
 function smsInfo() { const n = smsNum(); $('smsInfo').textContent = n ? 'Twój numer: ' + n + ' · online' : 'Łączenie z siecią…'; }
 function smsList() {
   const last = k => sms[k].m[sms[k].m.length - 1];
-  const keys = Object.keys(sms).filter(k => sms[k].m && sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
+  const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
   $('smsList').hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
-  $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span><span class='chat-del' data-del='${k}' title='Usuń'>×</span></button>`).join('');
+  $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span></button>`).join('');
   [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = keys[i]; b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
 }
 function smsDraw() {
   const box = $('msgs'); box.innerHTML = '';
-  ((sms[smsCur] || {}).m || []).forEach(g => { 
-    const d = document.createElement('div'); 
-    d.className = 'msg' + (g.f === 'me' ? ' me' : ''); 
-    d.textContent = g.x; 
-    const s = document.createElement('small'); 
-    s.textContent = smsTime(g.t); 
-    d.appendChild(s); 
-    
-    const btnDel = document.createElement('button');
-    btnDel.className = 'msg-del';
-    btnDel.innerHTML = '×';
-    btnDel.title = 'Usuń wiadomość';
-    btnDel.onclick = (e) => {
-      e.stopPropagation();
-      smsDeleteMsg(g.i);
-    };
-    d.appendChild(btnDel);
-
-    box.appendChild(d); 
-  });
+  ((sms[smsCur] || {}).m || []).forEach(g => { const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : ''); d.textContent = g.x; const s = document.createElement('small'); s.textContent = smsTime(g.t); d.appendChild(s); box.appendChild(d); });
   box.scrollTop = box.scrollHeight;
-}
-function smsDeleteMsg(id) {
-  if (!smsCur || !sms[smsCur]) return;
-  const c = sms[smsCur];
-  c.m = c.m.filter(m => m.i !== id);
-  if (id) smsIds.delete(id);
-  saveSms();
-  smsDraw();
-  smsList();
-}
-function smsDeleteChat(num) {
-  if (!sms[num]) return;
-  (sms[num].m || []).forEach(g => g.i && smsIds.delete(g.i));
-  delete sms[num];
-  saveSms();
-  if (smsCur === num) {
-    smsCur = '';
-    setOpen('win-chat', false);
-  }
-  smsList();
 }
 function smsAdd(num, from, text, t, id) {
   if (id) { if (smsIds.has(id)) return false; smsIds.add(id); }
@@ -964,29 +925,9 @@ $('smsGo').addEventListener('click', smsGo);
 $('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
 $('smsSend').addEventListener('click', smsSend);
 $('smsIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsSend(); } });
-$('smsList').addEventListener('click', e => { 
-  const delBtn = e.target.closest('[data-del]');
-  if (delBtn) {
-    e.stopPropagation();
-    smsDeleteChat(delBtn.dataset.del);
-    return;
-  }
-  const b = e.target.closest('.nitem'); 
-  if (b) { beep(520, .06); smsOpen(b.dataset.n); } 
-});
-if ($('smsDelChat')) {
-  $('smsDelChat').addEventListener('click', () => {
-    if (smsCur) smsDeleteChat(smsCur);
-  });
-}
-const winChatClose = $('win-chat')?.querySelector('[data-close]');
-if (winChatClose) {
-  winChatClose.addEventListener('click', () => { smsCur = ''; if (typeof setOpen === 'function') setOpen('win-chat', false); });
-}
-const winSmsOpen = document.querySelector('[data-open=win-sms]');
-if (winSmsOpen) {
-  winSmsOpen.addEventListener('click', smsInfo);
-}
+$('smsList').addEventListener('click', e => { const b = e.target.closest('.nitem'); if (b) { beep(520, .06); smsOpen(b.dataset.n); } });
+$('win-chat').querySelector('[data-close]').addEventListener('click', () => { smsCur = ''; });
+document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
 smsInfo(); smsList();
 
   /* ---------- Rysowanie ---------- */
