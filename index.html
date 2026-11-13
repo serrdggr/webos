@@ -2,17 +2,34 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Przekierowanie...</title>
-    <!-- 1. Przekierowanie przez znacznik meta -->
-    <meta http-equiv="refresh" content="0; url=https://serrdggr.github.io/webos/phone.html">
-    
-    <!-- 2. Przekierowanie za pomocą JavaScript -->
-    <script>
-        window.location.replace("https://serrdggr.github.io/webos/phone.html");
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Przejdź dalej</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #121212;
+            font-family: Arial, sans-serif;
+        }
+        .guzik {
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #2563eb;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .guzik:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
 </head>
 <body>
-    <!-- 3. Zapasowy link -->
-    <p>Jeśli nie nastąpiło automatyczne przekierowanie, <a href="https://serrdggr.github.io/webos/phone.html">kliknij tutaj</a>.</p>
+    <a href="https://serrdggr.github.io/webos/phone.html" class="guzik">Kliknij tutaj</a>
 </body>
 </html>
