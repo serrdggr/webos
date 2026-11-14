@@ -1168,8 +1168,8 @@ power.addEventListener('pointerdown', () => { if (power.dataset.state !== 'off')
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
 
 boot();
+  
 /* ---------- BAZA DANYCH ---------- */
-</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
   import { getFirestore, collection, doc, runTransaction, setDoc, query, where, onSnapshot }
@@ -1185,6 +1185,7 @@ boot();
   });
   const db = getFirestore(app);
 
+  // Stały identyfikator tego urządzenia (zapamiętany w przeglądarce)
   let devId = null;
   try {
     devId = localStorage.getItem('device-id');
@@ -1195,6 +1196,7 @@ boot();
   } catch (e) {}
   if (!devId) devId = 'tmp-' + Math.random().toString(36).slice(2);
 
+  // Rezerwuje końcówkę numeru: true = wolna albo już należy do tego urządzenia
   function claim(suffix) {
     const ref = doc(db, 'urzadzenia', suffix);
     return runTransaction(db, async (t) => {
@@ -1205,25 +1207,50 @@ boot();
     });
   }
 
+  // Pobiera publiczny adres IP urządzenia
+  async function getIp() {
+    try {
+      const c = new AbortController();
+      const to = setTimeout(() => c.abort(), 5000);
+      const r = await fetch('https://api64.ipify.org?format=json', { cache: 'no-store', signal: c.signal });
+      clearTimeout(to);
+      return (await r.json()).ip || null;
+    } catch (e) { return null; }
+  }
+
+  // Zapisuje w bazie: numer, IP, nazwa urządzenia, czas (strona admin.html to czyta)
+  async function reportIp(num, ip, name) {
+    ip = ip || await getIp();
+    if (!ip) return;
+    if (!name) { try { name = localStorage.getItem('name') || 'Mój WebOS'; } catch (e) { name = 'Mój WebOS'; } }
+    await setDoc(doc(db, 'adresy', num.slice(4)), { ip, id: devId, name: String(name).slice(0, 20), t: Date.now() });
+  }
+
   async function claimNumber(cached) {
+    let num = null;
     const m = /^600-(\d{3})$/.exec(cached || '');
-    if (m && await claim(m[1])) return cached;
-    for (let i = 0; i < 80; i++) {
+    if (m && await claim(m[1])) num = cached;
+    for (let i = 0; !num && i < 80; i++) {
       const s = String(Math.floor(Math.random() * 900) + 100);
-      if (await claim(s)) return '600-' + s;
+      if (await claim(s)) num = '600-' + s;
     }
-    throw new Error('Brak wolnych numerów');
+    if (!num) throw new Error('Brak wolnych numerów');
+    reportIp(num).catch((e) => console.error('Adres IP:', e));
+    return num;
   }
 
   window.__fbResolve({
     claimNumber,
     newId: () => doc(collection(db, 'sms')).id,
+    reportIp,
     send: (id, from, to, x, t) => setDoc(doc(db, 'sms', id), { from, to, x, t }),
-    listen: (me, cb) => onSnapshot(query(collection(db, 'sms'), where('to', '==', me)), (snap) => {
-      snap.docChanges().forEach((ch) => {
+    listen: (me, cb) => onSnapshot(
+      query(collection(db, 'sms'), where('to', '==', me)),
+      (snap) => snap.docChanges().forEach((ch) => {
         if (ch.type === 'added') { const d = ch.doc.data(); cb(ch.doc.id, d.from, d.x, d.t); }
-      });
-    })
+      }),
+      (err) => console.error('Odbiór wiadomości:', err)
+    )
   });
 </script>
 </body>
