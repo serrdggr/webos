@@ -1168,8 +1168,9 @@ power.addEventListener('pointerdown', () => { if (power.dataset.state !== 'off')
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
 
 boot();
-  
+
 /* ---------- BAZA DANYCH ---------- */
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
   import { getFirestore, collection, doc, runTransaction, setDoc, query, where, onSnapshot }
