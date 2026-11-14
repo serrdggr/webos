@@ -867,10 +867,13 @@ window.addEventListener('online', initPhoneNumber);
 
   /* ---------- Wiadomości (Firebase) ---------- */
 let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
+let contacts = {}; try { contacts = JSON.parse(store.get('contacts', '{}')) || {}; } catch (e) {}
 let smsCur = '';
 const smsIds = new Set();
 Object.values(sms).forEach(c => c.m.forEach(g => g.i && smsIds.add(g.i)));
 const saveSms = () => store.set('sms', JSON.stringify(sms));
+const saveContacts = () => store.set('contacts', JSON.stringify(contacts));
+const cname = n => contacts[n] || n;
 const smsNum = () => store.get('phone-num', '');
 const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 3 ? '600-' + d : d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
 const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
@@ -880,7 +883,7 @@ function smsList() {
   const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
   $('smsList').hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
   $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span></button>`).join('');
-  [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = keys[i]; b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
+  [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = cname(keys[i]); b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
 }
 function smsDraw() {
   const box = $('msgs'); box.innerHTML = '';
@@ -895,7 +898,7 @@ function smsAdd(num, from, text, t, id) {
   saveSms(); smsList(); if (seen) smsDraw();
   return true;
 }
-function smsOpen(num) { smsCur = num; $('smsStat').textContent = ''; if (sms[num]) { sms[num].u = 0; saveSms(); } $('smsTitle').textContent = num; smsDraw(); smsList(); setOpen('win-chat', true); }
+function smsOpen(num) { smsCur = num; $('smsStat').textContent = ''; if (sms[num]) { sms[num].u = 0; saveSms(); } $('smsTitle').textContent = cname(num); smsDraw(); smsList(); setOpen('win-chat', true); }
 async function smsSend() {
   const x = $('smsIn').value.trim(), me = smsNum();
   if (!x || !smsCur) return;
@@ -921,6 +924,18 @@ function smsListen() {
   }).catch(() => { smsLN = ''; });
 }
 function smsGo() { const n = smsNorm($('smsTo').value); if (!n) return; $('smsTo').value = ''; smsOpen(n); }
+function smsRename() {
+  if (!smsCur) return;
+  const v = prompt('Nazwa dla ' + smsCur + ' (puste = usuń nazwę):', contacts[smsCur] || '');
+  if (v === null) return;
+  const n = v.trim().slice(0, 30);
+  if (n) contacts[smsCur] = n; else delete contacts[smsCur];
+  saveContacts();
+  $('smsTitle').textContent = cname(smsCur);
+  smsList();
+}
+$('smsTitle').style.cursor = 'pointer';
+$('smsTitle').addEventListener('click', smsRename);
 $('smsGo').addEventListener('click', smsGo);
 $('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
 $('smsSend').addEventListener('click', smsSend);
