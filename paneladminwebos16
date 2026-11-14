@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebOS: zakwaterowane urządzenia</title>
+<style>
+  :root { --bg: #f4f5f7; --card: #fff; --text: #1c1c21; --muted: #6b6e78; --line: #e3e4ea; --accent: #607d8b; --ok: #1db954; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d0d12; --card: #1b1b22; --text: #ececf1; --muted: #9a9ca6; --line: #2c2c32; --accent: #90a4ae; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Roboto", "Segoe UI", system-ui, sans-serif; padding: 16px; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 6px 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  input { flex: 1; min-width: 180px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 15px; }
+  .count { color: var(--muted); font-size: 14px; white-space: nowrap; }
+  .wrap { background: var(--card); border-radius: 14px; overflow-x: auto; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  .num { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ip { font-family: ui-monospace, Consolas, monospace; }
+  .none { color: var(--muted); }
+  .empty { padding: 24px; text-align: center; color: var(--muted); }
+  .status { font-size: 13px; margin-bottom: 10px; }
+  .status.ok { color: var(--ok); } .status.err { color: #e53935; }
+</style>
+</head>
+<body>
+  <h1>Zakwaterowane urządzenia</h1>
+  <p class="sub">Numery telefonów WebOS i adresy IP, z których się łączą. Lista odświeża się na żywo.</p>
+  <p class="status" id="status">Łączenie z bazą…</p>
+  <div class="bar">
+    <input id="q" placeholder="Szukaj po numerze, IP lub nazwie" aria-label="Szukaj">
+    <span class="count" id="count"></span>
+  </div>
+  <div class="wrap">
+    <table>
+      <thead><tr><th>Numer</th><th>Adres IP</th><th>Nazwa</th><th>Ostatnio widziany</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="empty" id="empty" hidden>Brak urządzeń.</p>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+
+  const db = getFirestore(initializeApp({
+    apiKey: "AIzaSyAg3xZArQs19uU6qBv70e469R-9xe5W0mI",
+    authDomain: "webosmemory.firebaseapp.com",
+    projectId: "webosmemory",
+    storageBucket: "webosmemory.firebasestorage.app",
+    messagingSenderId: "298781278310",
+    appId: "1:298781278310:web:65d1adb31b88c0a8db6da7"
+  }));
+
+  const $ = (id) => document.getElementById(id);
+  const urz = {}, adr = {};   // numery (urzadzenia) i adresy IP (adresy)
+
+  function fmt(t) { return t ? new Date(t).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }) : '—'; }
+
+  function render() {
+    const q = $('q').value.trim().toLowerCase();
+    const rows = Object.keys(urz).map((n) => {
+      const a = adr[n] || {};
+      return { num: '600-' + n, ip: a.ip || '', name: a.name || '', t: a.t || (urz[n] && urz[n].t) || 0 };
+    }).filter((r) => !q || (r.num + ' ' + r.ip + ' ' + r.name).toLowerCase().includes(q))
+      .sort((a, b) => b.t - a.t);
+
+    const body = $('rows');
+    body.innerHTML = '';
+    rows.forEach((r) => {
+      const tr = document.createElement('tr');
+      [[r.num, 'num'], [r.ip || 'brak (jeszcze nie zgłoszony)', r.ip ? 'ip' : 'none'], [r.name || '—', ''], [fmt(r.t), '']].forEach(([txt, cls]) => {
+        const td = document.createElement('td');
+        td.textContent = txt; if (cls) td.className = cls;
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    $('empty').hidden = rows.length > 0;
+    $('count').textContent = rows.length + ' z ' + Object.keys(urz).length;
+  }
+
+  function listen(name, target) {
+    onSnapshot(collection(db, name), (snap) => {
+      Object.keys(target).forEach((k) => delete target[k]);
+      snap.forEach((d) => { target[d.id] = d.data(); });
+      $('status').textContent = 'Połączono, dane na żywo.'; $('status').className = 'status ok';
+      render();
+    }, (err) => {
+      console.error(name, err);
+      $('status').textContent = 'Błąd odczytu bazy (' + name + '). Sprawdź reguły Firestore, F12 → Console.'; $('status').className = 'status err';
+    });
+  }
+
+  listen('urzadzenia', urz);
+  listen('adresy', adr);
+  $('q').addEventListener('input', render);
+</script>
+</body>
+</html>
