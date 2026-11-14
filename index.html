@@ -934,8 +934,13 @@ function smsRename() {
   $('smsTitle').textContent = cname(smsCur);
   smsList();
 }
-$('smsTitle').style.cursor = 'pointer';
-$('smsTitle').addEventListener('click', smsRename);
+const smsPen = document.createElement('button');
+smsPen.title = 'Zmień nazwę kontaktu';
+smsPen.setAttribute('aria-label', 'Zmień nazwę kontaktu');
+smsPen.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+smsPen.style.cssText = 'background:none;border:0;color:inherit;padding:4px 8px;cursor:pointer;display:inline-flex;align-items:center;vertical-align:middle;';
+smsPen.addEventListener('click', smsRename);
+$('smsTitle').after(smsPen);
 $('smsGo').addEventListener('click', smsGo);
 $('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
 $('smsSend').addEventListener('click', smsSend);
