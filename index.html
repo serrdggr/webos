@@ -865,7 +865,7 @@ window.addEventListener('online', initPhoneNumber);
   $('bHome').addEventListener('click', e => { const b = e.target.closest('[data-url]'); if (b) { beep(520, .05); bGo(b.dataset.url); } });
   bShow();
 
-  /* ---------- Wiadomości (Firebase) ---------- */
+/* ---------- Wiadomości (Firebase) ---------- */
 let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
 let contacts = {}; try { contacts = JSON.parse(store.get('contacts', '{}')) || {}; } catch (e) {}
 let smsCur = '';
