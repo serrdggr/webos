@@ -866,39 +866,127 @@ window.addEventListener('online', initPhoneNumber);
   bShow();
 
 /* ---------- Wiadomości (Firebase) ---------- */
+const SMS_MAX = 300; // maks. wiadomości zapamiętanych na kontakt
+
 let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
 let contacts = {}; try { contacts = JSON.parse(store.get('contacts', '{}')) || {}; } catch (e) {}
+
+// Czyszczenie danych zapisanych wcześniej (zły typ czasu, brak tablicy itp.)
+Object.keys(sms).forEach(k => {
+  const c = sms[k];
+  if (!c || !Array.isArray(c.m)) { delete sms[k]; return; }
+  c.u = Number(c.u) || 0;
+  c.m = c.m.filter(g => g && typeof g.x === 'string').map(g => ({ ...g, t: Number(g.t) || 0 }));
+  c.m.sort((a, b) => a.t - b.t);
+});
+
 let smsCur = '';
 const smsIds = new Set();
 Object.values(sms).forEach(c => c.m.forEach(g => g.i && smsIds.add(g.i)));
-const saveSms = () => store.set('sms', JSON.stringify(sms));
+
+const saveSms = () => { try { store.set('sms', JSON.stringify(sms)); } catch (e) {} };
 const saveContacts = () => store.set('contacts', JSON.stringify(contacts));
 const cname = n => contacts[n] || n;
 const smsNum = () => store.get('phone-num', '');
 const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 3 ? '600-' + d : d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
 const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+
+// Czas z serwera może być liczbą, tekstem albo obiektem Timestamp
+function smsTs(t) {
+  if (t && typeof t.toMillis === 'function') t = t.toMillis();
+  else if (t && typeof t.seconds === 'number') t = t.seconds * 1000;
+  t = Number(t);
+  return isFinite(t) && t > 0 ? t : Date.now();
+}
+
 function smsInfo() { const n = smsNum(); $('smsInfo').textContent = n ? 'Twój numer: ' + n + ' · online' : 'Łączenie z siecią…'; }
+
+/* ----- lista rozmów ----- */
 function smsList() {
   const last = k => sms[k].m[sms[k].m.length - 1];
   const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
-  $('smsList').hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
-  $('smsList').innerHTML = keys.map(k => `<button class='row nitem' data-n='${k}'><span><span class='ntitle'></span><span class='nprev'></span></span><span class='val'></span></button>`).join('');
-  [...$('smsList').children].forEach((b, i) => { const c = sms[keys[i]], l = last(keys[i]); b.querySelector('.ntitle').textContent = cname(keys[i]); b.querySelector('.nprev').textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x; b.querySelector('.val').textContent = c.u ? c.u + ' nowe' : smsTime(l.t); if (c.u) b.querySelector('.ntitle').style.fontWeight = '700'; });
+  const list = $('smsList');
+  list.hidden = !keys.length; $('smsEmpty').hidden = !!keys.length;
+  const frag = document.createDocumentFragment();
+  keys.forEach(k => {
+    const c = sms[k], l = last(k);
+    const b = document.createElement('button'); b.className = 'row nitem'; b.dataset.n = k;
+    const wrap = document.createElement('span');
+    const title = document.createElement('span'); title.className = 'ntitle'; title.textContent = cname(k);
+    const prev = document.createElement('span'); prev.className = 'nprev'; prev.textContent = (l.f === 'me' ? 'Ty: ' : '') + l.x;
+    const val = document.createElement('span'); val.className = 'val'; val.textContent = c.u ? c.u + ' nowe' : smsTime(l.t);
+    if (c.u) title.style.fontWeight = '700';
+    wrap.append(title, prev); b.append(wrap, val); frag.appendChild(b);
+  });
+  list.replaceChildren(frag);
 }
-function smsDraw() {
-  const box = $('msgs'); box.innerHTML = '';
-  ((sms[smsCur] || {}).m || []).forEach(g => { const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : ''); d.textContent = g.x; const s = document.createElement('small'); s.textContent = smsTime(g.t); d.appendChild(s); box.appendChild(d); });
-  box.scrollTop = box.scrollHeight;
+
+/* ----- widok rozmowy ----- */
+const smsChatOpen = () => $('win-chat').classList.contains('open');
+
+function smsDraw(forceBottom) {
+  const box = $('msgs');
+  // przewijamy na dół tylko gdy użytkownik już był na dole (albo wymusiliśmy)
+  const stick = forceBottom || box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  const frag = document.createDocumentFragment();
+  ((sms[smsCur] || {}).m || []).forEach(g => {
+    const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : '');
+    d.textContent = g.x;
+    const s = document.createElement('small'); s.textContent = smsTime(g.t);
+    d.appendChild(s); frag.appendChild(d);
+  });
+  box.replaceChildren(frag);
+  if (stick) box.scrollTop = box.scrollHeight;
 }
-function smsAdd(num, from, text, t, id) {
+
+/* ----- odświeżanie zbiorcze: wiele wiadomości naraz = jedno przerysowanie ----- */
+let smsTimer = 0, smsForce = false;
+function smsRefresh(force) {
+  if (force) smsForce = true;
+  if (smsTimer) return;
+  smsTimer = setTimeout(() => {
+    smsTimer = 0;
+    const f = smsForce; smsForce = false;
+    saveSms(); smsList();
+    if (smsCur && smsChatOpen()) smsDraw(f);
+  }, 60);
+}
+
+/* ----- dźwięk/wibracja: jeden sygnał na paczkę wiadomości ----- */
+let smsPing = 0;
+function smsNotify() {
+  if (smsPing) return;
+  smsPing = setTimeout(() => {
+    smsPing = 0;
+    if ($('power').dataset.state !== 'off') { beep(880, .1); buzz([60, 40, 60]); }
+  }, 250);
+}
+
+function smsAdd(num, from, text, t, id, force) {
   if (id) { if (smsIds.has(id)) return false; smsIds.add(id); }
-  const c = sms[num] = sms[num] || { m: [], u: 0 }, seen = smsCur === num && $('win-chat').classList.contains('open');
-  c.m.push({ f: from, x: text, t, i: id }); c.m.sort((a, b) => a.t - b.t);
+  t = smsTs(t);
+  const c = sms[num] = sms[num] || { m: [], u: 0 };
+  const seen = smsCur === num && smsChatOpen();
+  // wstawiamy we właściwe miejsce wg czasu (bez sortowania całej tablicy)
+  const msg = { f: from, x: text, t, i: id };
+  let p = c.m.length;
+  while (p > 0 && c.m[p - 1].t > t) p--;
+  c.m.splice(p, 0, msg);
+  if (c.m.length > SMS_MAX) c.m.splice(0, c.m.length - SMS_MAX);
   if (from === 'them' && !seen) c.u++;
-  saveSms(); smsList(); if (seen) smsDraw();
+  smsRefresh(force);
   return true;
 }
-function smsOpen(num) { smsCur = num; $('smsStat').textContent = ''; if (sms[num]) { sms[num].u = 0; saveSms(); } $('smsTitle').textContent = cname(num); smsDraw(); smsList(); setOpen('win-chat', true); }
+
+function smsOpen(num) {
+  smsCur = num; $('smsStat').textContent = '';
+  if (sms[num]) { sms[num].u = 0; saveSms(); }
+  $('smsTitle').textContent = cname(num);
+  setOpen('win-chat', true);
+  smsDraw(true); smsList();
+}
+
+/* ----- wysyłanie (komunikacja z bazą bez zmian) ----- */
 async function smsSend() {
   const x = $('smsIn').value.trim(), me = smsNum();
   if (!x || !smsCur) return;
@@ -908,10 +996,12 @@ async function smsSend() {
   catch (e) { $('smsStat').textContent = 'Brak połączenia z serwerem. Spróbuj ponownie.'; return; }
   $('smsIn').value = ''; $('smsStat').textContent = '';
   const to = smsCur, t = Date.now(), id = fb.newId();
-  smsAdd(to, 'me', x, t, id); beep(760, .05);
+  smsAdd(to, 'me', x, t, id, true); beep(760, .05);
   try { await withTimeout(fb.send(id, me, to, x, t), 10000); }
   catch (e) { $('smsStat').textContent = 'Nie udało się potwierdzić wysłania. Sprawdź internet.'; }
 }
+
+/* ----- odbieranie (komunikacja z bazą bez zmian) ----- */
 let smsLN = '', smsUnsub = null;
 function smsListen() {
   const me = smsNum(); if (!me || me === smsLN) return;
@@ -919,10 +1009,11 @@ function smsListen() {
   fbReady.then(fb => {
     if (smsLN !== me) return;
     smsUnsub = fb.listen(me, (id, from, x, t) => {
-      if (smsAdd(smsNorm(from) || '???', 'them', String(x).slice(0, 500), t || Date.now(), id) && $('power').dataset.state !== 'off') { beep(880, .1); buzz([60, 40, 60]); }
+      if (smsAdd(smsNorm(from) || '???', 'them', String(x).slice(0, 500), t, id)) smsNotify();
     });
   }).catch(() => { smsLN = ''; });
 }
+
 function smsGo() { const n = smsNorm($('smsTo').value); if (!n) return; $('smsTo').value = ''; smsOpen(n); }
 function smsRename() {
   if (!smsCur) return;
@@ -934,6 +1025,8 @@ function smsRename() {
   $('smsTitle').textContent = cname(smsCur);
   smsList();
 }
+
+/* ----- interfejs ----- */
 const smsPen = document.createElement('button');
 smsPen.title = 'Zmień nazwę kontaktu';
 smsPen.setAttribute('aria-label', 'Zmień nazwę kontaktu');
@@ -949,7 +1042,6 @@ $('smsList').addEventListener('click', e => { const b = e.target.closest('.nitem
 $('win-chat').querySelector('[data-close]').addEventListener('click', () => { smsCur = ''; });
 document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
 smsInfo(); smsList();
-
  /* ---------- Rysowanie ---------- */
 const dc = $('dCanvas'), dx = dc.getContext('2d', { willReadFrequently: true }), dpr = Math.min(window.devicePixelRatio || 1, 2);
 dc.width = Math.round((dc.clientWidth || 350) * dpr); dc.height = Math.round((dc.clientHeight || 340) * dpr);
