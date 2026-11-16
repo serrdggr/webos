@@ -1006,31 +1006,116 @@ smsInfo(); smsList();
   $('win-note').querySelector('[data-close]').addEventListener('click', () => { if (nCur && !nCur.x.trim() && !(nCur.h || '').trim() && !(nCur.c || []).length) { nts = nts.filter(n => n !== nCur); saveN(); drawN(); } nCur = null; });
   drawN();
 
-  /* ---------- Kalkulator ---------- */
-  let cCur = '0', cPrev = null, cOp = null, cFresh = false, cExpr = '';
-  const cFmt = s => String(s).replace('.', ',');
-  const cSym = { '+': '+', '-': '−', '*': '×', '/': '÷' };
-  const cCalc = (a, b, o) => { a = Number(a); b = Number(b); const r = o === '+' ? a + b : o === '-' ? a - b : o === '*' ? a * b : (b === 0 ? NaN : a / b); return isFinite(r) ? String(parseFloat(r.toPrecision(12))) : 'Błąd'; };
-  function cDraw() { $('cRes').textContent = cFmt(cCur); $('cRes').style.fontSize = cCur.length > 14 ? '30px' : cCur.length > 9 ? '40px' : ''; $('cExpr').textContent = cExpr || (cPrev !== null ? cFmt(cPrev) + ' ' + cSym[cOp] : ''); }
-  function cPress(k) {
-    if (cCur === 'Błąd' && k !== 'C') { if (!(k.length === 1 && '0123456789.'.includes(k))) return; cCur = '0'; cFresh = false; }
-    if (k.length === 1 && '0123456789'.includes(k)) { if (cFresh) { cCur = k; cFresh = false; cExpr = ''; } else if (cCur.replace(/[-.]/g, '').length < 12) cCur = cCur === '0' ? k : cCur === '-0' ? '-' + k : cCur + k; }
-    else if (k === '.') { if (cFresh) { cCur = '0'; cFresh = false; cExpr = ''; } if (!cCur.includes('.')) cCur += '.'; }
-    else if (k.length === 1 && '+-*/'.includes(k)) { if (cOp && !cFresh) cCur = cCalc(cPrev, cCur, cOp); cPrev = cCur; cOp = k; cFresh = true; cExpr = ''; if (cCur === 'Błąd') { cPrev = null; cOp = null; } }
-    else if (k === '=') { if (cOp) { const a = cPrev, b = cCur; cCur = cCalc(a, b, cOp); cExpr = cFmt(a) + ' ' + cSym[cOp] + ' ' + cFmt(b) + ' ='; cPrev = null; cOp = null; cFresh = true; } }
-    else if (k === '%') { cCur = cCalc(cCur, 100, '/'); cFresh = true; }
-    else if (k === 'neg') { if (cCur !== '0') cCur = cCur[0] === '-' ? cCur.slice(1) : '-' + cCur; }
-    else if (k === 'back') { if (!cFresh) cCur = cCur.length > 1 && !(cCur.length === 2 && cCur[0] === '-') ? cCur.slice(0, -1) : '0'; }
-    else if (k === 'C') { cCur = '0'; cPrev = null; cOp = null; cFresh = false; cExpr = ''; }
-    cDraw();
+ /* ---------- Kalkulator ---------- */
+let cCur = '0', cPrev = null, cOp = null, cFresh = false, cAwait = false, cExpr = '', cLast = null;
+const cSym = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+const cFix = r => isFinite(r) ? String(parseFloat(r.toPrecision(12))) : 'Błąd';
+const cCalc = (a, b, o) => {
+  a = Number(a); b = Number(b);
+  return cFix(o === '+' ? a + b : o === '-' ? a - b : o === '*' ? a * b : (b === 0 ? NaN : a / b));
+};
+// separatory tysięcy (twarda spacja) + przecinek dziesiętny
+const cFmt = s => {
+  s = String(s);
+  if (s === 'Błąd' || /e/i.test(s)) return s.replace('.', ',');
+  const [i, d] = s.split('.');
+  return i.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0') + (d !== undefined ? ',' + d : '');
+};
+
+function cDraw() {
+  const t = cFmt(cCur), len = t.length;
+  $('cRes').textContent = t;
+  $('cRes').style.fontSize = len > 16 ? '28px' : len > 11 ? '36px' : len > 8 ? '44px' : '';
+  $('cExpr').textContent = cExpr || (cPrev !== null ? cFmt(cPrev) + ' ' + cSym[cOp] : '');
+}
+
+function cReset() { cCur = '0'; cPrev = null; cOp = null; cFresh = false; cAwait = false; cExpr = ''; }
+
+function cPress(k) {
+  if (k === 'CE' && cCur === 'Błąd') k = 'C';
+  if (cCur === 'Błąd' && k !== 'C') {
+    if (!(k.length === 1 && '0123456789.'.includes(k))) return;
+    cReset(); cLast = null;
   }
-  $('cKeys').addEventListener('click', e => { const b = e.target.closest('.ck'); if (b) { cPress(b.dataset.k); beep(520, .03); buzz(8); } });
-  document.addEventListener('keydown', e => {
-    if (!$('win-calc').classList.contains('open') || e.ctrlKey || e.altKey || e.metaKey || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
-    const m = { Enter: '=', Backspace: 'back', Delete: 'C', ',': '.' }, k = m[e.key] || e.key;
-    if ((k.length === 1 && '0123456789.+-*/=%'.includes(k)) || k === 'back' || k === 'C') { e.preventDefault(); cPress(k); }
-  });
+
+  const unary = f => { cCur = cFix(f(Number(cCur))); cFresh = true; cAwait = false; cExpr = ''; };
+
+  if (k.length === 1 && '0123456789'.includes(k)) {
+    if (cFresh) { cCur = k; cFresh = false; cAwait = false; cExpr = ''; }
+    else if (cCur.replace(/[-.]/g, '').length < 12) cCur = cCur === '0' ? k : cCur === '-0' ? '-' + k : cCur + k;
+  }
+  else if (k === '.') {
+    if (cFresh) { cCur = '0'; cFresh = false; cAwait = false; cExpr = ''; }
+    if (!cCur.includes('.')) cCur += '.';
+  }
+  else if (k.length === 1 && '+-*/'.includes(k)) {
+    if (cOp && !cAwait) cCur = cCalc(cPrev, cCur, cOp);   // łańcuch: 2 + 3 + ...
+    if (cCur === 'Błąd') { cPrev = null; cOp = null; cFresh = true; cAwait = false; cExpr = ''; }
+    else { cPrev = cCur; cOp = k; cFresh = true; cAwait = true; cExpr = ''; }
+  }
+  else if (k === '=') {
+    if (cOp) {                                            // zwykłe równa się
+      const a = cPrev, b = cCur;
+      cCur = cCalc(a, b, cOp);
+      cExpr = cFmt(a) + ' ' + cSym[cOp] + ' ' + cFmt(b) + ' =';
+      cLast = cCur === 'Błąd' ? null : { op: cOp, b };
+      cPrev = null; cOp = null; cFresh = true; cAwait = false;
+    } else if (cLast) {                                   // powtórzenie: 5 + 2 = = = → 7, 9, 11
+      const a = cCur;
+      cCur = cCalc(a, cLast.b, cLast.op);
+      cExpr = cFmt(a) + ' ' + cSym[cLast.op] + ' ' + cFmt(cLast.b) + ' =';
+      cFresh = true;
+    }
+  }
+  else if (k === '%') {
+    if (cOp && !cAwait && (cOp === '+' || cOp === '-')) {
+      // 200 + 10 % → 200 + 20
+      cCur = cFix(Number(cPrev) * Number(cCur) / 100);
+      cFresh = false;
+    } else unary(x => x / 100);
+  }
+  else if (k === 'neg') {
+    if (cFresh && cAwait) { cCur = '-0'; cFresh = false; cAwait = false; }  // po operatorze zaczyna nową liczbę
+    else if (cCur !== '0') cCur = cCur[0] === '-' ? cCur.slice(1) : '-' + cCur;
+  }
+  else if (k === 'back') {
+    if (!cFresh) cCur = cCur.length > 1 && !(cCur.length === 2 && cCur[0] === '-') ? cCur.slice(0, -1) : '0';
+  }
+  else if (k === 'CE') { cCur = '0'; cFresh = false; if (cAwait) cAwait = false; }
+  else if (k === 'C') { cReset(); cLast = null; }
+  // opcjonalne klawisze (dodaj przyciski z data-k="sqrt" / "sq" / "inv")
+  else if (k === 'sqrt') unary(x => x < 0 ? NaN : Math.sqrt(x));
+  else if (k === 'sq')   unary(x => x * x);
+  else if (k === 'inv')  unary(x => x === 0 ? NaN : 1 / x);
+
   cDraw();
+}
+
+$('cKeys').addEventListener('click', e => {
+  const b = e.target.closest('.ck');
+  if (b) { cPress(b.dataset.k); beep(520, .03); buzz(8); }
+});
+
+// kliknięcie w wynik kopiuje go do schowka
+$('cRes').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(String(cCur).replace('.', ','));
+    const old = $('cExpr').textContent;
+    $('cExpr').textContent = 'Skopiowano';
+    setTimeout(cDraw, 700);
+  } catch (_) {}
+});
+
+document.addEventListener('keydown', e => {
+  if (!$('win-calc').classList.contains('open') || e.ctrlKey || e.altKey || e.metaKey || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  const m = { Enter: '=', Backspace: 'back', Delete: 'CE', Escape: 'C', ',': '.', x: '*', X: '*', ':': '/' };
+  const k = m[e.key] || e.key;
+  if ((k.length === 1 && '0123456789.+-*/=%'.includes(k)) || ['back', 'C', 'CE'].includes(k)) {
+    e.preventDefault(); cPress(k); beep(520, .03);
+  }
+});
+
+cDraw();
 
   /* ---------- Zegar: stoper, minutnik, budzik ---------- */
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab)); beep(520, .05); }));
