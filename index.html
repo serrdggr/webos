@@ -952,13 +952,54 @@ function smsRefresh(force) {
   }, 60);
 }
 
-/* ----- dźwięk/wibracja: jeden sygnał na paczkę wiadomości ----- */
-let smsPing = 0;
-function smsNotify() {
+/* ----- powiadomienie o nowej wiadomości (baner + dźwięk + wibracja) ----- */
+const smsBanner = document.createElement('div');
+smsBanner.setAttribute('role', 'alert');
+smsBanner.hidden = true;
+smsBanner.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;width:min(92vw,360px);box-sizing:border-box;background:#1f2430;color:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,.4);cursor:pointer;font:inherit;display:flex;align-items:center;gap:10px;';
+const smsBannerTxt = document.createElement('div');
+smsBannerTxt.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+const smsBannerTitle = document.createElement('div');
+smsBannerTitle.style.cssText = 'font-weight:700;font-size:14px;';
+const smsBannerBody = document.createElement('div');
+smsBannerBody.style.cssText = 'font-size:13px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+const smsBannerX = document.createElement('button');
+smsBannerX.textContent = '✕'; smsBannerX.setAttribute('aria-label', 'Zamknij powiadomienie');
+smsBannerX.style.cssText = 'background:none;border:0;color:inherit;font-size:16px;padding:4px;cursor:pointer;';
+smsBannerTxt.append(smsBannerTitle, smsBannerBody);
+smsBanner.append('✉️', smsBannerTxt, smsBannerX);
+document.body.appendChild(smsBanner);
+
+let smsBannerNum = '', smsBannerTimer = 0;
+function smsBannerHide() { clearTimeout(smsBannerTimer); smsBanner.hidden = true; }
+smsBannerX.addEventListener('click', e => { e.stopPropagation(); smsBannerHide(); });
+smsBanner.addEventListener('click', () => { const n = smsBannerNum; smsBannerHide(); if (n && n !== '???') { beep(520, .06); smsOpen(n); } });
+
+let smsPend = {}, smsPing = 0;
+function smsNotify(num, text) {
+  const p = smsPend[num] = smsPend[num] || { n: 0, x: '' };
+  p.n++; p.x = text;
   if (smsPing) return;
+  // zbieramy paczkę wiadomości przez chwilę i pokazujemy jedno powiadomienie
   smsPing = setTimeout(() => {
     smsPing = 0;
-    if ($('power').dataset.state !== 'off') { beep(880, .1); buzz([60, 40, 60]); }
+    const pend = smsPend; smsPend = {};
+    if ($('power').dataset.state === 'off') return;
+    const nums = Object.keys(pend), total = nums.reduce((s, k) => s + pend[k].n, 0);
+    if (!total) return;
+    if (nums.length === 1) {
+      const k = nums[0];
+      smsBannerNum = k;
+      smsBannerTitle.textContent = 'Nowa wiadomość od ' + cname(k) + (pend[k].n > 1 ? ' (' + pend[k].n + ')' : '');
+      smsBannerBody.textContent = pend[k].x;
+    } else {
+      smsBannerNum = '';
+      smsBannerTitle.textContent = total + ' nowych wiadomości';
+      smsBannerBody.textContent = 'Od: ' + nums.map(cname).join(', ');
+    }
+    smsBanner.hidden = false;
+    clearTimeout(smsBannerTimer); smsBannerTimer = setTimeout(smsBannerHide, 6000);
+    beep(880, .1); beep(1100, .1, .12); buzz([60, 40, 60]);
   }, 250);
 }
 
@@ -1009,7 +1050,9 @@ function smsListen() {
   fbReady.then(fb => {
     if (smsLN !== me) return;
     smsUnsub = fb.listen(me, (id, from, x, t) => {
-      if (smsAdd(smsNorm(from) || '???', 'them', String(x).slice(0, 500), t, id)) smsNotify();
+      const num = smsNorm(from) || '???', text = String(x).slice(0, 500);
+      const seen = smsCur === num && smsChatOpen(); // rozmowa już otwarta = bez powiadomienia
+      if (smsAdd(num, 'them', text, t, id) && !seen) smsNotify(num, text);
     });
   }).catch(() => { smsLN = ''; });
 }
@@ -1026,6 +1069,22 @@ function smsRename() {
   smsList();
 }
 
+/* ----- interfejs ----- */
+const smsPen = document.createElement('button');
+smsPen.title = 'Zmień nazwę kontaktu';
+smsPen.setAttribute('aria-label', 'Zmień nazwę kontaktu');
+smsPen.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+smsPen.style.cssText = 'background:none;border:0;color:inherit;padding:4px 8px;cursor:pointer;display:inline-flex;align-items:center;vertical-align:middle;';
+smsPen.addEventListener('click', smsRename);
+$('smsTitle').after(smsPen);
+$('smsGo').addEventListener('click', smsGo);
+$('smsTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsGo(); } });
+$('smsSend').addEventListener('click', smsSend);
+$('smsIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); smsSend(); } });
+$('smsList').addEventListener('click', e => { const b = e.target.closest('.nitem'); if (b) { beep(520, .06); smsOpen(b.dataset.n); } });
+$('win-chat').querySelector('[data-close]').addEventListener('click', () => { smsCur = ''; });
+document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
+smsInfo(); smsList();
 /* ----- interfejs ----- */
 const smsPen = document.createElement('button');
 smsPen.title = 'Zmień nazwę kontaktu';
@@ -1145,6 +1204,7 @@ document.addEventListener('keydown', e => {
 });
 
 dToolUi(); dBtnState();
+  
   /* ---------- Notatki ---------- */
   let nts = []; try { nts = JSON.parse(store.get('notesapp', '[]')) || []; } catch (e) {}
   let nCur = null;
