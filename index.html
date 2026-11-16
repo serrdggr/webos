@@ -950,32 +950,109 @@ $('win-chat').querySelector('[data-close]').addEventListener('click', () => { sm
 document.querySelector('[data-open=win-sms]').addEventListener('click', smsInfo);
 smsInfo(); smsList();
 
-  /* ---------- Rysowanie ---------- */
-  const dc = $('dCanvas'), dx = dc.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
-  dc.width = Math.round((dc.clientWidth || 350) * dpr); dc.height = Math.round((dc.clientHeight || 340) * dpr);
-  dx.fillStyle = '#fff'; dx.fillRect(0, 0, dc.width, dc.height);
-  const dSaved = store.get('drawing', '');
-  if (dSaved) { const im = new Image(); im.onload = () => dx.drawImage(im, 0, 0, dc.width, dc.height); im.src = dSaved; }
-  let dColor = '#1c1c21', dSize = 6, dEraser = false, dDrawing = false, dLast = null, dUndo = [], dTimer = 0;
-  const dSave = () => { clearTimeout(dTimer); dTimer = setTimeout(() => store.set('drawing', dc.toDataURL()), 400); };
-  const dPos = e => { const r = dc.getBoundingClientRect(); return { x: (e.clientX - r.left) * dc.width / r.width, y: (e.clientY - r.top) * dc.height / r.height }; };
-  const dInk = () => dEraser ? '#ffffff' : dColor;
-  const dSnap = () => { dUndo.push(dx.getImageData(0, 0, dc.width, dc.height)); if (dUndo.length > 10) dUndo.shift(); };
-  dc.addEventListener('pointerdown', e => { e.preventDefault(); dc.setPointerCapture(e.pointerId); dSnap(); dDrawing = true; dLast = dPos(e); dx.fillStyle = dInk(); dx.beginPath(); dx.arc(dLast.x, dLast.y, dSize * dpr / 2, 0, Math.PI * 2); dx.fill(); });
-  dc.addEventListener('pointermove', e => { if (!dDrawing) return; const p = dPos(e); dx.strokeStyle = dInk(); dx.lineWidth = dSize * dpr; dx.lineCap = 'round'; dx.lineJoin = 'round'; dx.beginPath(); dx.moveTo(dLast.x, dLast.y); dx.lineTo(p.x, p.y); dx.stroke(); dLast = p; });
-  ['pointerup', 'pointercancel'].forEach(ev => dc.addEventListener(ev, () => { if (dDrawing) { dDrawing = false; dSave(); } }));
-  const D_COLORS = ['#1c1c21', '#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#8d6e63'];
-  $('dColors').innerHTML = D_COLORS.map(c => `<button class='dcol' role='radio' data-c='${c}' aria-checked='false' aria-label='Kolor ${c}' style='background:${c}'></button>`).join('');
-  function dToolUi() { $('dColors').querySelectorAll('.dcol').forEach(b => b.setAttribute('aria-checked', String(!dEraser && b.dataset.c === dColor))); $('dBrush').classList.toggle('main', !dEraser); $('dErase').classList.toggle('main', dEraser); }
-  $('dColors').addEventListener('click', e => { const b = e.target.closest('.dcol'); if (!b) return; dColor = b.dataset.c; dEraser = false; dToolUi(); beep(520, .04); });
-  $('dBrush').addEventListener('click', () => { dEraser = false; dToolUi(); });
-  $('dErase').addEventListener('click', () => { dEraser = true; dToolUi(); });
-  $('dSize').addEventListener('input', e => { dSize = Number(e.target.value); $('dSizeVal').textContent = dSize; });
-  $('dUndo').addEventListener('click', () => { const s = dUndo.pop(); if (s) { dx.putImageData(s, 0, 0); dSave(); beep(480, .05); } });
-  $('dClear').addEventListener('click', () => { dSnap(); dx.fillStyle = '#fff'; dx.fillRect(0, 0, dc.width, dc.height); dSave(); beep(480, .08); buzz(20); });
-  $('dSave').addEventListener('click', () => { const a = document.createElement('a'); a.href = dc.toDataURL('image/png'); a.download = 'rysunek.png'; a.click(); });
-  dToolUi();
+ /* ---------- Rysowanie ---------- */
+const dc = $('dCanvas'), dx = dc.getContext('2d', { willReadFrequently: true }), dpr = Math.min(window.devicePixelRatio || 1, 2);
+dc.width = Math.round((dc.clientWidth || 350) * dpr); dc.height = Math.round((dc.clientHeight || 340) * dpr);
+dc.style.touchAction = 'none';                       // bez przewijania strony podczas rysowania
+const dWhite = () => { dx.fillStyle = '#fff'; dx.fillRect(0, 0, dc.width, dc.height); };
+dWhite();
+const dSaved = store.get('drawing', '');
+if (dSaved) { const im = new Image(); im.onload = () => dx.drawImage(im, 0, 0, dc.width, dc.height); im.src = dSaved; }
 
+let dColor = '#1c1c21', dSize = 6, dEraser = false, dDrawing = false, dLast = null, dMid = null, dPen = false, dPid = null;
+let dUndo = [], dRedo = [], dTimer = 0;
+
+const dSave = () => {
+  clearTimeout(dTimer);
+  dTimer = setTimeout(() => { try { store.set('drawing', dc.toDataURL()); } catch (_) {} }, 400);
+};
+const dPos = e => { const r = dc.getBoundingClientRect(); return { x: (e.clientX - r.left) * dc.width / r.width, y: (e.clientY - r.top) * dc.height / r.height, p: e.pressure }; };
+const dInk = () => dEraser ? '#ffffff' : dColor;
+const dWidth = p => dSize * dpr * (dEraser ? 2.5 : 1) * (dPen && p > 0 ? 0.35 + 0.9 * p : 1);   // gumka grubsza, rysik reaguje na nacisk
+
+const dSnap = () => {
+  dUndo.push(dx.getImageData(0, 0, dc.width, dc.height));
+  if (dUndo.length > 15) dUndo.shift();
+  dRedo = [];
+  dBtnState();
+};
+function dStep(from, to) {                           // cofnij / ponów
+  const s = from.pop(); if (!s) return;
+  to.push(dx.getImageData(0, 0, dc.width, dc.height));
+  dx.putImageData(s, 0, 0); dSave(); dBtnState(); beep(480, .05);
+}
+const dDoUndo = () => dStep(dUndo, dRedo), dDoRedo = () => dStep(dRedo, dUndo);
+function dBtnState() {
+  $('dUndo').disabled = !dUndo.length;
+  const r = $('dRedo'); if (r) r.disabled = !dRedo.length;
+}
+
+/* --- rysowanie z wygładzaniem (krzywe przez środki odcinków) --- */
+dc.addEventListener('pointerdown', e => {
+  if (!e.isPrimary || dDrawing) return;              // ignoruj dłoń / drugi palec
+  e.preventDefault(); dc.setPointerCapture(e.pointerId); dPid = e.pointerId;
+  dPen = e.pointerType === 'pen';
+  dSnap(); dDrawing = true;
+  const p = dPos(e); dLast = dMid = p;
+  dx.fillStyle = dInk(); dx.beginPath(); dx.arc(p.x, p.y, dWidth(p.p) / 2, 0, Math.PI * 2); dx.fill();
+});
+dc.addEventListener('pointermove', e => {
+  if (!dDrawing || e.pointerId !== dPid) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  dx.strokeStyle = dInk(); dx.lineCap = 'round'; dx.lineJoin = 'round';
+  for (const ev of (evs.length ? evs : [e])) {
+    const p = dPos(ev), mid = { x: (dLast.x + p.x) / 2, y: (dLast.y + p.y) / 2 };
+    dx.lineWidth = dWidth(p.p);
+    dx.beginPath(); dx.moveTo(dMid.x, dMid.y); dx.quadraticCurveTo(dLast.x, dLast.y, mid.x, mid.y); dx.stroke();
+    dLast = p; dMid = mid;
+  }
+});
+function dEnd(e) {
+  if (!dDrawing || e.pointerId !== dPid) return;
+  dx.strokeStyle = dInk(); dx.lineWidth = dWidth(dLast.p); dx.lineCap = 'round';
+  dx.beginPath(); dx.moveTo(dMid.x, dMid.y); dx.lineTo(dLast.x, dLast.y); dx.stroke();   // domknij ostatni odcinek
+  dDrawing = false; dPid = null; dSave();
+}
+['pointerup', 'pointercancel'].forEach(ev => dc.addEventListener(ev, dEnd));
+
+/* --- paleta i narzędzia --- */
+const D_COLORS = ['#1c1c21', '#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#8d6e63'];
+$('dColors').innerHTML = D_COLORS.map(c => `<button class='dcol' role='radio' data-c='${c}' aria-checked='false' aria-label='Kolor ${c}' style='background:${c}'></button>`).join('');
+function dToolUi() {
+  $('dColors').querySelectorAll('.dcol').forEach(b => b.setAttribute('aria-checked', String(!dEraser && b.dataset.c === dColor)));
+  $('dBrush').classList.toggle('main', !dEraser);
+  $('dErase').classList.toggle('main', dEraser);
+}
+$('dColors').addEventListener('click', e => { const b = e.target.closest('.dcol'); if (!b) return; dColor = b.dataset.c; dEraser = false; dToolUi(); beep(520, .04); });
+$('dBrush').addEventListener('click', () => { dEraser = false; dToolUi(); });
+$('dErase').addEventListener('click', () => { dEraser = true; dToolUi(); });
+$('dSize').addEventListener('input', e => { dSize = Number(e.target.value); $('dSizeVal').textContent = dSize; });
+
+// opcjonalnie: <input type="color" id="dCustom"> – własny kolor
+$('dCustom')?.addEventListener('input', e => { dColor = e.target.value; dEraser = false; dToolUi(); });
+// opcjonalnie: <button id="dRedo">↷</button> – ponów
+$('dRedo')?.addEventListener('click', dDoRedo);
+
+$('dUndo').addEventListener('click', dDoUndo);
+$('dClear').addEventListener('click', () => { dSnap(); dWhite(); dSave(); beep(480, .08); buzz(20); });
+$('dSave').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = dc.toDataURL('image/png');
+  a.download = 'rysunek-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.png';
+  a.click();
+});
+
+/* --- skróty klawiszowe (gdy okno rysowania jest otwarte) --- */
+document.addEventListener('keydown', e => {
+  const w = $('win-draw');                           // dostosuj ID okna, jeśli masz inne
+  if (w && !w.classList.contains('open')) return;
+  if (/INPUT|TEXTAREA/.test(e.target.tagName) || !(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' && !e.shiftKey) { e.preventDefault(); dDoUndo(); }
+  else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); dDoRedo(); }
+});
+
+dToolUi(); dBtnState();
   /* ---------- Notatki ---------- */
   let nts = []; try { nts = JSON.parse(store.get('notesapp', '[]')) || []; } catch (e) {}
   let nCur = null;
