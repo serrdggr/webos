@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WebOS</title>
+<!-- Leaflet CSS do obsługi map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root { --wall-a: #1d2b64; --wall-b: #5b3a8c; --wall-c: #f2845c; --text: #fff;
     --win-bg: #f4f5f7; --win-text: #1c1c21; --card: #fff; --line: #ececf0; --hover: #f0f1f4; --muted: #8a8d96; --head: #607d8b; --accent: #607d8b; }
@@ -76,7 +78,6 @@
   .wall[aria-checked="true"] .check { visibility: visible; }
   .wall:focus-visible { outline: 3px solid var(--win-text); outline-offset: 2px; }
   .row.danger { color: #e53935; }
-  /* odcisk palca */
   .fp { position: relative; -webkit-tap-highlight-color: transparent; width: 112px; height: 112px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; cursor: pointer; overflow: hidden; transition: transform .15s, border-color .2s, background .2s; }
   .fp:hover { background: rgba(255,255,255,.2); }
   .fp:active { transform: scale(.94); }
@@ -123,7 +124,6 @@
   #power .by { margin-top: 8px; font-size: 12px; letter-spacing: 1px; color: #fff; }
   .nav { position: relative; z-index: 6; display: flex; justify-content: center; padding: 6px 0 12px; }
   .nav i { width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.7); }
-  /* kalendarz */
   .calnav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 18px; }
   .calbtn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--card); color: inherit; font-size: 22px; cursor: pointer; }
   .calbtn:hover { background: var(--hover); }
@@ -137,7 +137,6 @@
   .hour:last-child { border-bottom: 0; }
   .hh { width: 46px; flex: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .note { flex: 1; min-width: 0; padding: 10px 0; border: 0; background: none; color: var(--win-text); font: inherit; font-size: 15px; outline: none; }
-  /* zegar */
   [hidden] { display: none !important; }
   .tabs { display: flex; gap: 6px; background: var(--card); border-radius: 14px; padding: 4px; margin-bottom: 20px; }
   .tab { flex: 1; padding: 10px 0; border: 0; border-radius: 10px; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
@@ -158,7 +157,6 @@
   .adel { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; }
   #ringBox { position: absolute; top: 44px; left: 12px; right: 12px; z-index: 17; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: #e53935; color: #fff; font-size: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
   #ringOff { border: 0; border-radius: 12px; padding: 8px 16px; background: #fff; color: #e53935; font: inherit; font-weight: 500; cursor: pointer; }
-  /* kalkulator */
   .cdisp { text-align: right; padding: 8px 6px 18px; min-height: 120px; display: flex; flex-direction: column; justify-content: flex-end; }
   .cexpr { font-size: 16px; color: var(--muted); min-height: 22px; word-break: break-all; }
   .cres { font-size: 56px; font-weight: 300; line-height: 1.1; word-break: break-all; font-variant-numeric: tabular-nums; }
@@ -169,7 +167,6 @@
   .ck.op { background: var(--accent); color: #fff; }
   .ck.eq { background: #f2845c; color: #fff; }
   .phone[data-theme="dark"] .ck.op { color: #121214; }
-  /* notatki */
   .ntext { width: 100%; min-height: 200px; padding: 14px 16px; border: 0; border-radius: 16px; background: var(--card); color: var(--win-text); font: inherit; font-size: 16px; line-height: 1.5; resize: none; outline: none; }
   .nitem > span:first-child { min-width: 0; flex: 1; }
   .ntitle, .nprev { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -184,14 +181,12 @@
   .task.done .ttext { text-decoration: line-through; color: var(--muted); }
   .taskadd { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
   .taskadd .ntitlein { margin-bottom: 0; font-size: 16px; font-weight: 400; flex: 1; min-width: 0; }
-  /* rysowanie */
   .dcanvas { display: block; width: 100%; height: 340px; border-radius: 16px; background: #fff; touch-action: none; cursor: crosshair; box-shadow: 0 0 0 1px var(--line); }
   .dcolors { display: flex; justify-content: space-between; gap: 6px; margin: 16px 2px; }
   .dcol { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
   .dcol[aria-checked='true'] { outline: 3px solid var(--win-text); outline-offset: 2px; }
   .dbtns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .dbtns .cbtn { min-width: 0; padding: 10px 14px; font-size: 14px; }
-  /* przeglądarka */
   .window .bbody { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
   .btool { display: flex; align-items: center; gap: 4px; padding: 8px 10px; background: var(--card); border-bottom: 1px solid var(--line); }
   .bbtn { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; background: none; color: var(--win-text); font-size: 20px; cursor: pointer; }
@@ -202,13 +197,26 @@
   .bframe { flex: 1; width: 100%; border: 0; background: #fff; }
   .bnote { padding: 8px 12px; font-size: 12px; text-align: center; background: var(--card); color: var(--muted); border-top: 1px solid var(--line); }
   .bnote a { color: var(--accent); }
-  /* wiadomosci */
   .chatbody { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
   #msgs { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
   .msg { max-width: 78%; padding: 8px 12px; border-radius: 16px; background: var(--card); align-self: flex-start; word-break: break-word; }
   .msg.me { align-self: flex-end; background: var(--accent); color: #fff; }
   .phone[data-theme="dark"] .msg.me { color: #121214; }
   .msg small { display: block; font-size: 11px; opacity: .7; margin-top: 2px; }
+
+  /* Mapy */
+  #mapContainer { width: 100%; height: 100%; flex: 1; z-index: 1; border-radius: 0 0 24px 24px; }
+  .map-tools { display: flex; gap: 8px; padding: 10px; background: var(--card); border-bottom: 1px solid var(--line); z-index: 10; }
+  .map-search { flex: 1; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--win-bg); color: var(--win-text); font: inherit; font-size: 14px; outline: none; }
+  .map-btn { padding: 0 14px; height: 36px; border-radius: 18px; border: 0; background: var(--accent); color: #fff; font: inherit; font-size: 14px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; }
+  .map-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  /* Muzyka */
+  .album-art { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(45deg, #e91e63, #9c27b0); display: grid; place-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin: 10px auto; transition: transform 0.5s ease; }
+  .album-art.playing { animation: spin 8s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .music-progress { width: 100%; height: 6px; background: var(--line); border-radius: 3px; margin: 15px 0; overflow: hidden; cursor: pointer; }
+  .music-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
 </style>
 </head>
 <body>
@@ -251,6 +259,14 @@
         <div class="icon" style="background:#00897b"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 3a9 9 0 0 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4c2 0 3.6-1.6 3.6-3.6C21 6.5 17 3 12 3zM6.5 12a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></div>
         <span>Rysowanie</span>
       </button>
+      <button class="app" data-open="win-maps">
+        <div class="icon" style="background:#4caf50"><svg viewBox="0 0 24 24"><path d="M20.5 3l-6 2.25L9 3 3.5 5.25A1 1 0 0 0 3 6.18v14.07a.5.5 0 0 0 .68.46L9 18.75l5.5 2.25 5.5-2.25a.5.5 0 0 0 .32-.46V4.25a1 1 0 0 0-1.32-.95zM15 19.1l-6-2.45V4.9l6 2.45v11.75z"/></svg></div>
+        <span>Mapy</span>
+      </button>
+      <button class="app" data-open="win-music">
+        <div class="icon" style="background:#e91e63"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+        <span>Muzyka</span>
+      </button>
       <button class="app" data-open="win-browser">
         <div class="icon" style="background:#1e88e5"><svg viewBox="0 0 24 24" style="fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
         <span>Przeglądarka</span>
@@ -260,6 +276,62 @@
         <span>Wiadomości</span>
       </button>
     </section>
+
+    <!-- MUZYKA -->
+    <div class="window" id="win-music" role="dialog" aria-label="Muzyka" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-music" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Muzyka</span>
+      </header>
+      <div class="body" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="album-art" id="mArt">
+            <svg viewBox="0 0 24 24" style="width:60px; height:60px; fill:#fff;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+            <div id="mTitle" style="font-size:18px; font-weight:600;">Synthwave Breeze</div>
+            <div id="mArtist" style="font-size:13px; color:var(--muted); margin-top:4px;">WebOS Beats</div>
+          </div>
+          <div class="music-progress" id="mProg">
+            <div class="music-bar" id="mBar"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:-10px;">
+            <span id="mCur">0:00</span>
+            <span id="mDur">0:30</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:16px; align-items:center; justify-content:center; margin:15px 0;">
+          <button class="cbtn" id="mPrev">⏮</button>
+          <button class="cbtn main" id="mPlay" style="width:56px; height:56px; border-radius:50%; font-size:20px; display:grid; place-items:center;">▶</button>
+          <button class="cbtn" id="mNext">⏭</button>
+        </div>
+
+        <div class="list" style="max-height:160px; overflow:auto;">
+          <button class="row" data-track="0"><span>1. Synthwave Breeze<small>WebOS Beats</small></span></button>
+          <button class="row" data-track="1"><span>2. Chill Hop Rain<small>Lo-Fi Vibes</small></span></button>
+          <button class="row" data-track="2"><span>3. 80s Arcade Rush<small>Retro Wave</small></span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPY -->
+    <div class="window" id="win-maps" role="dialog" aria-label="Mapy" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-maps" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Mapy</span>
+      </header>
+      <div class="body bbody">
+        <div class="map-tools">
+          <input class="map-search" id="mapSearchIn" type="text" placeholder="Szukaj adresu lub miasta…" aria-label="Szukaj miejsca">
+          <button class="map-btn" id="mapSearchBtn">Szukaj</button>
+          <button class="map-btn" id="mapLocBtn" title="Moja lokalizacja" aria-label="Moja lokalizacja">
+            <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          </button>
+        </div>
+        <div id="mapContainer"></div>
+      </div>
+    </div>
 
     <!-- USTAWIENIA -->
     <div class="window" id="win-settings" role="dialog" aria-label="Ustawienia" aria-hidden="true">
@@ -574,6 +646,9 @@
     <div class="nav" id="navPill"><i></i></div>
     <div id="dim"></div>
   </main>
+
+<!-- Biblioteka Leaflet JS do Map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const $ = id => document.getElementById(id);
   const store = {
@@ -625,7 +700,7 @@
     });
   }
 
-/* ---------- Numer telefonu (unikalny, z Firebase) ---------- */
+/* ---------- Numer telefonu ---------- */
 const numEl = $('phoneNum');
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 let fbResolve;
@@ -661,7 +736,11 @@ window.addEventListener('online', initPhoneNumber);
   const setOpen = (id, on) => {
     const w = $(id); if (!w) return;
     w.classList.toggle('open', on); w.setAttribute('aria-hidden', String(!on));
-    if (on) { if (id === 'win-info') $('infoRes').textContent = innerWidth + ' × ' + innerHeight; if (id === 'win-finger') resetEnrollUi(); }
+    if (on) {
+      if (id === 'win-info') $('infoRes').textContent = innerWidth + ' × ' + innerHeight;
+      if (id === 'win-finger') resetEnrollUi();
+      if (id === 'win-maps') initMap();
+    }
   };
   const closeTop = () => { const o = [...document.querySelectorAll('.window.open')]; if (o.length) setOpen(o[o.length - 1].id, false); };
   const closeAll = () => document.querySelectorAll('.window.open').forEach(w => setOpen(w.id, false));
@@ -802,6 +881,110 @@ window.addEventListener('online', initPhoneNumber);
   lockNow.addEventListener('click', showLock);
   refreshSecurity();
 
+  /* ---------- Mapy ---------- */
+  let mapInstance = null, mapMarker = null;
+  function initMap() {
+    if (mapInstance) {
+      setTimeout(() => mapInstance.invalidateSize(), 100);
+      return;
+    }
+    mapInstance = L.map('mapContainer', { zoomControl: true }).setView([52.2297, 21.0122], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(mapInstance);
+  }
+
+  async function searchLocation(query) {
+    if (!query.trim()) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        mapInstance.setView([lat, lon], 14);
+        if (mapMarker) mapInstance.removeLayer(mapMarker);
+        mapMarker = L.marker([lat, lon]).addTo(mapInstance).bindPopup(data[0].display_name).openPopup();
+      } else {
+        alert('Nie znaleziono miejsca.');
+      }
+    } catch (e) {
+      alert('Błąd podczas wyszukiwania.');
+    }
+  }
+
+  $('mapSearchBtn').addEventListener('click', () => searchLocation($('mapSearchIn').value));
+  $('mapSearchIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocation($('mapSearchIn').value); } });
+  $('mapLocBtn').addEventListener('click', () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        mapInstance.setView([lat, lon], 15);
+        if (mapMarker) mapInstance.removeLayer(mapMarker);
+        mapMarker = L.marker([lat, lon]).addTo(mapInstance).bindPopup('Moja lokalizacja').openPopup();
+      }, () => alert('Nie można pobrać lokalizacji.'));
+    } else alert('Geolokalizacja nie jest wspierana.');
+  });
+
+  /* ---------- Muzyka ---------- */
+  const TRACKS = [
+    { title: 'Synthwave Breeze', artist: 'WebOS Beats', baseFreq: 440 },
+    { title: 'Chill Hop Rain', artist: 'Lo-Fi Vibes', baseFreq: 330 },
+    { title: '80s Arcade Rush', artist: 'Retro Wave', baseFreq: 523 }
+  ];
+  let curTrack = 0, isPlaying = false, audioTimer = null, curTime = 0, trackDur = 30;
+
+  function updateTrackUi() {
+    $('mTitle').textContent = TRACKS[curTrack].title;
+    $('mArtist').textContent = TRACKS[curTrack].artist;
+    $('mPlay').textContent = isPlaying ? '⏸' : '▶';
+    $('mArt').classList.toggle('playing', isPlaying);
+  }
+
+  function playSynthMusic() {
+    if (!isPlaying) return;
+    const notes = [0, 2, 4, 7, 9];
+    const note = notes[Math.floor(Math.random() * notes.length)];
+    const freq = TRACKS[curTrack].baseFreq * Math.pow(2, note / 12);
+    beep(freq, 0.2);
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    updateTrackUi();
+    if (isPlaying) {
+      audioTimer = setInterval(() => {
+        curTime++;
+        if (curTime >= trackDur) { curTime = 0; nextTrack(); }
+        $('mBar').style.width = (curTime / trackDur * 100) + '%';
+        $('mCur').textContent = '0:' + String(curTime).padStart(2, '0');
+        playSynthMusic();
+      }, 1000);
+    } else {
+      clearInterval(audioTimer);
+    }
+  }
+
+  function selectTrack(idx) {
+    curTrack = idx; curTime = 0;
+    $('mBar').style.width = '0%';
+    $('mCur').textContent = '0:00';
+    if (isPlaying) { clearInterval(audioTimer); isPlaying = false; togglePlay(); }
+    else updateTrackUi();
+  }
+
+  function nextTrack() { selectTrack((curTrack + 1) % TRACKS.length); }
+  function prevTrack() { selectTrack((curTrack - 1 + TRACKS.length) % TRACKS.length); }
+
+  $('mPlay').addEventListener('click', togglePlay);
+  $('mNext').addEventListener('click', nextTrack);
+  $('mPrev').addEventListener('click', prevTrack);
+  $('win-music').querySelector('.list').addEventListener('click', e => {
+    const b = e.target.closest('[data-track]');
+    if (b) selectTrack(Number(b.dataset.track));
+  });
+
   /* ---------- Kalendarz ---------- */
   let notes = {};
   try { notes = JSON.parse(store.get('cal', '{}')) || {}; } catch (e) {}
@@ -865,13 +1048,12 @@ window.addEventListener('online', initPhoneNumber);
   $('bHome').addEventListener('click', e => { const b = e.target.closest('[data-url]'); if (b) { beep(520, .05); bGo(b.dataset.url); } });
   bShow();
 
-/* ---------- Wiadomości (Firebase) ---------- */
-const SMS_MAX = 300; // maks. wiadomości zapamiętanych na kontakt
+/* ---------- Wiadomości ---------- */
+const SMS_MAX = 300;
 
 let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
 let contacts = {}; try { contacts = JSON.parse(store.get('contacts', '{}')) || {}; } catch (e) {}
 
-// Czyszczenie danych zapisanych wcześniej (zły typ czasu, brak tablicy itp.)
 Object.keys(sms).forEach(k => {
   const c = sms[k];
   if (!c || !Array.isArray(c.m)) { delete sms[k]; return; }
@@ -891,7 +1073,6 @@ const smsNum = () => store.get('phone-num', '');
 const smsNorm = v => { const d = String(v).replace(/[^0-9]/g, ''); return d.length === 3 ? '600-' + d : d.length === 6 ? d.slice(0, 3) + '-' + d.slice(3) : d; };
 const smsTime = t => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 
-// Czas z serwera może być liczbą, tekstem albo obiektem Timestamp
 function smsTs(t) {
   if (t && typeof t.toMillis === 'function') t = t.toMillis();
   else if (t && typeof t.seconds === 'number') t = t.seconds * 1000;
@@ -901,7 +1082,6 @@ function smsTs(t) {
 
 function smsInfo() { const n = smsNum(); $('smsInfo').textContent = n ? 'Twój numer: ' + n + ' · online' : 'Łączenie z siecią…'; }
 
-/* ----- lista rozmów ----- */
 function smsList() {
   const last = k => sms[k].m[sms[k].m.length - 1];
   const keys = Object.keys(sms).filter(k => sms[k].m.length).sort((a, b) => last(b).t - last(a).t);
@@ -921,12 +1101,10 @@ function smsList() {
   list.replaceChildren(frag);
 }
 
-/* ----- widok rozmowy ----- */
 const smsChatOpen = () => $('win-chat').classList.contains('open');
 
 function smsDraw(forceBottom) {
   const box = $('msgs');
-  // przewijamy na dół tylko gdy użytkownik już był na dole (albo wymusiliśmy)
   const stick = forceBottom || box.scrollHeight - box.scrollTop - box.clientHeight < 80;
   const frag = document.createDocumentFragment();
   ((sms[smsCur] || {}).m || []).forEach(g => {
@@ -939,7 +1117,6 @@ function smsDraw(forceBottom) {
   if (stick) box.scrollTop = box.scrollHeight;
 }
 
-/* ----- odświeżanie zbiorcze: wiele wiadomości naraz = jedno przerysowanie ----- */
 let smsTimer = 0, smsForce = false;
 function smsRefresh(force) {
   if (force) smsForce = true;
@@ -952,7 +1129,6 @@ function smsRefresh(force) {
   }, 60);
 }
 
-/* ----- powiadomienie o nowej wiadomości (baner + dźwięk + wibracja) ----- */
 const smsBanner = document.createElement('div');
 smsBanner.setAttribute('role', 'alert');
 smsBanner.hidden = true;
@@ -980,7 +1156,6 @@ function smsNotify(num, text) {
   const p = smsPend[num] = smsPend[num] || { n: 0, x: '' };
   p.n++; p.x = text;
   if (smsPing) return;
-  // zbieramy paczkę wiadomości przez chwilę i pokazujemy jedno powiadomienie
   smsPing = setTimeout(() => {
     smsPing = 0;
     const pend = smsPend; smsPend = {};
@@ -1008,7 +1183,6 @@ function smsAdd(num, from, text, t, id, force) {
   t = smsTs(t);
   const c = sms[num] = sms[num] || { m: [], u: 0 };
   const seen = smsCur === num && smsChatOpen();
-  // wstawiamy we właściwe miejsce wg czasu (bez sortowania całej tablicy)
   const msg = { f: from, x: text, t, i: id };
   let p = c.m.length;
   while (p > 0 && c.m[p - 1].t > t) p--;
@@ -1027,7 +1201,6 @@ function smsOpen(num) {
   smsDraw(true); smsList();
 }
 
-/* ----- wysyłanie (komunikacja z bazą bez zmian) ----- */
 async function smsSend() {
   const x = $('smsIn').value.trim(), me = smsNum();
   if (!x || !smsCur) return;
@@ -1042,7 +1215,6 @@ async function smsSend() {
   catch (e) { $('smsStat').textContent = 'Nie udało się potwierdzić wysłania. Sprawdź internet.'; }
 }
 
-/* ----- odbieranie (komunikacja z bazą bez zmian) ----- */
 let smsLN = '', smsUnsub = null;
 function smsListen() {
   const me = smsNum(); if (!me || me === smsLN) return;
@@ -1051,7 +1223,7 @@ function smsListen() {
     if (smsLN !== me) return;
     smsUnsub = fb.listen(me, (id, from, x, t) => {
       const num = smsNorm(from) || '???', text = String(x).slice(0, 500);
-      const seen = smsCur === num && smsChatOpen(); // rozmowa już otwarta = bez powiadomienia
+      const seen = smsCur === num && smsChatOpen();
       if (smsAdd(num, 'them', text, t, id) && !seen) smsNotify(num, text);
     });
   }).catch(() => { smsLN = ''; });
@@ -1069,7 +1241,6 @@ function smsRename() {
   smsList();
 }
 
-/* ----- interfejs ----- */
 const smsPen = document.createElement('button');
 smsPen.title = 'Zmień nazwę kontaktu';
 smsPen.setAttribute('aria-label', 'Zmień nazwę kontaktu');
@@ -1089,7 +1260,7 @@ smsInfo(); smsList();
  /* ---------- Rysowanie ---------- */
 const dc = $('dCanvas'), dx = dc.getContext('2d', { willReadFrequently: true }), dpr = Math.min(window.devicePixelRatio || 1, 2);
 dc.width = Math.round((dc.clientWidth || 350) * dpr); dc.height = Math.round((dc.clientHeight || 340) * dpr);
-dc.style.touchAction = 'none';                       // bez przewijania strony podczas rysowania
+dc.style.touchAction = 'none';
 const dWhite = () => { dx.fillStyle = '#fff'; dx.fillRect(0, 0, dc.width, dc.height); };
 dWhite();
 const dSaved = store.get('drawing', '');
@@ -1104,7 +1275,7 @@ const dSave = () => {
 };
 const dPos = e => { const r = dc.getBoundingClientRect(); return { x: (e.clientX - r.left) * dc.width / r.width, y: (e.clientY - r.top) * dc.height / r.height, p: e.pressure }; };
 const dInk = () => dEraser ? '#ffffff' : dColor;
-const dWidth = p => dSize * dpr * (dEraser ? 2.5 : 1) * (dPen && p > 0 ? 0.35 + 0.9 * p : 1);   // gumka grubsza, rysik reaguje na nacisk
+const dWidth = p => dSize * dpr * (dEraser ? 2.5 : 1) * (dPen && p > 0 ? 0.35 + 0.9 * p : 1);
 
 const dSnap = () => {
   dUndo.push(dx.getImageData(0, 0, dc.width, dc.height));
@@ -1112,7 +1283,7 @@ const dSnap = () => {
   dRedo = [];
   dBtnState();
 };
-function dStep(from, to) {                           // cofnij / ponów
+function dStep(from, to) {
   const s = from.pop(); if (!s) return;
   to.push(dx.getImageData(0, 0, dc.width, dc.height));
   dx.putImageData(s, 0, 0); dSave(); dBtnState(); beep(480, .05);
@@ -1123,9 +1294,8 @@ function dBtnState() {
   const r = $('dRedo'); if (r) r.disabled = !dRedo.length;
 }
 
-/* --- rysowanie z wygładzaniem (krzywe przez środki odcinków) --- */
 dc.addEventListener('pointerdown', e => {
-  if (!e.isPrimary || dDrawing) return;              // ignoruj dłoń / drugi palec
+  if (!e.isPrimary || dDrawing) return;
   e.preventDefault(); dc.setPointerCapture(e.pointerId); dPid = e.pointerId;
   dPen = e.pointerType === 'pen';
   dSnap(); dDrawing = true;
@@ -1146,12 +1316,11 @@ dc.addEventListener('pointermove', e => {
 function dEnd(e) {
   if (!dDrawing || e.pointerId !== dPid) return;
   dx.strokeStyle = dInk(); dx.lineWidth = dWidth(dLast.p); dx.lineCap = 'round';
-  dx.beginPath(); dx.moveTo(dMid.x, dMid.y); dx.lineTo(dLast.x, dLast.y); dx.stroke();   // domknij ostatni odcinek
+  dx.beginPath(); dx.moveTo(dMid.x, dMid.y); dx.lineTo(dLast.x, dLast.y); dx.stroke();
   dDrawing = false; dPid = null; dSave();
 }
 ['pointerup', 'pointercancel'].forEach(ev => dc.addEventListener(ev, dEnd));
 
-/* --- paleta i narzędzia --- */
 const D_COLORS = ['#1c1c21', '#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#8d6e63'];
 $('dColors').innerHTML = D_COLORS.map(c => `<button class='dcol' role='radio' data-c='${c}' aria-checked='false' aria-label='Kolor ${c}' style='background:${c}'></button>`).join('');
 function dToolUi() {
@@ -1164,11 +1333,6 @@ $('dBrush').addEventListener('click', () => { dEraser = false; dToolUi(); });
 $('dErase').addEventListener('click', () => { dEraser = true; dToolUi(); });
 $('dSize').addEventListener('input', e => { dSize = Number(e.target.value); $('dSizeVal').textContent = dSize; });
 
-// opcjonalnie: <input type="color" id="dCustom"> – własny kolor
-$('dCustom')?.addEventListener('input', e => { dColor = e.target.value; dEraser = false; dToolUi(); });
-// opcjonalnie: <button id="dRedo">↷</button> – ponów
-$('dRedo')?.addEventListener('click', dDoRedo);
-
 $('dUndo').addEventListener('click', dDoUndo);
 $('dClear').addEventListener('click', () => { dSnap(); dWhite(); dSave(); beep(480, .08); buzz(20); });
 $('dSave').addEventListener('click', () => {
@@ -1178,9 +1342,8 @@ $('dSave').addEventListener('click', () => {
   a.click();
 });
 
-/* --- skróty klawiszowe (gdy okno rysowania jest otwarte) --- */
 document.addEventListener('keydown', e => {
-  const w = $('win-draw');                           // dostosuj ID okna, jeśli masz inne
+  const w = $('win-draw');
   if (w && !w.classList.contains('open')) return;
   if (/INPUT|TEXTAREA/.test(e.target.tagName) || !(e.ctrlKey || e.metaKey)) return;
   const k = e.key.toLowerCase();
@@ -1189,7 +1352,7 @@ document.addEventListener('keydown', e => {
 });
 
 dToolUi(); dBtnState();
-  
+
   /* ---------- Notatki ---------- */
   let nts = []; try { nts = JSON.parse(store.get('notesapp', '[]')) || []; } catch (e) {}
   let nCur = null;
@@ -1228,7 +1391,6 @@ const cCalc = (a, b, o) => {
   a = Number(a); b = Number(b);
   return cFix(o === '+' ? a + b : o === '-' ? a - b : o === '*' ? a * b : (b === 0 ? NaN : a / b));
 };
-// separatory tysięcy (twarda spacja) + przecinek dziesiętny
 const cFmt = s => {
   s = String(s);
   if (s === 'Błąd' || /e/i.test(s)) return s.replace('.', ',');
@@ -1263,18 +1425,18 @@ function cPress(k) {
     if (!cCur.includes('.')) cCur += '.';
   }
   else if (k.length === 1 && '+-*/'.includes(k)) {
-    if (cOp && !cAwait) cCur = cCalc(cPrev, cCur, cOp);   // łańcuch: 2 + 3 + ...
+    if (cOp && !cAwait) cCur = cCalc(cPrev, cCur, cOp);
     if (cCur === 'Błąd') { cPrev = null; cOp = null; cFresh = true; cAwait = false; cExpr = ''; }
     else { cPrev = cCur; cOp = k; cFresh = true; cAwait = true; cExpr = ''; }
   }
   else if (k === '=') {
-    if (cOp) {                                            // zwykłe równa się
+    if (cOp) {
       const a = cPrev, b = cCur;
       cCur = cCalc(a, b, cOp);
       cExpr = cFmt(a) + ' ' + cSym[cOp] + ' ' + cFmt(b) + ' =';
       cLast = cCur === 'Błąd' ? null : { op: cOp, b };
       cPrev = null; cOp = null; cFresh = true; cAwait = false;
-    } else if (cLast) {                                   // powtórzenie: 5 + 2 = = = → 7, 9, 11
+    } else if (cLast) {
       const a = cCur;
       cCur = cCalc(a, cLast.b, cLast.op);
       cExpr = cFmt(a) + ' ' + cSym[cLast.op] + ' ' + cFmt(cLast.b) + ' =';
@@ -1283,13 +1445,12 @@ function cPress(k) {
   }
   else if (k === '%') {
     if (cOp && !cAwait && (cOp === '+' || cOp === '-')) {
-      // 200 + 10 % → 200 + 20
       cCur = cFix(Number(cPrev) * Number(cCur) / 100);
       cFresh = false;
     } else unary(x => x / 100);
   }
   else if (k === 'neg') {
-    if (cFresh && cAwait) { cCur = '-0'; cFresh = false; cAwait = false; }  // po operatorze zaczyna nową liczbę
+    if (cFresh && cAwait) { cCur = '-0'; cFresh = false; cAwait = false; }
     else if (cCur !== '0') cCur = cCur[0] === '-' ? cCur.slice(1) : '-' + cCur;
   }
   else if (k === 'back') {
@@ -1297,10 +1458,6 @@ function cPress(k) {
   }
   else if (k === 'CE') { cCur = '0'; cFresh = false; if (cAwait) cAwait = false; }
   else if (k === 'C') { cReset(); cLast = null; }
-  // opcjonalne klawisze (dodaj przyciski z data-k="sqrt" / "sq" / "inv")
-  else if (k === 'sqrt') unary(x => x < 0 ? NaN : Math.sqrt(x));
-  else if (k === 'sq')   unary(x => x * x);
-  else if (k === 'inv')  unary(x => x === 0 ? NaN : 1 / x);
 
   cDraw();
 }
@@ -1310,7 +1467,6 @@ $('cKeys').addEventListener('click', e => {
   if (b) { cPress(b.dataset.k); beep(520, .03); buzz(8); }
 });
 
-// kliknięcie w wynik kopiuje go do schowka
 $('cRes').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(String(cCur).replace('.', ','));
@@ -1331,14 +1487,13 @@ document.addEventListener('keydown', e => {
 
 cDraw();
 
-  /* ---------- Zegar: stoper, minutnik, budzik ---------- */
+  /* ---------- Zegar ---------- */
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab)); beep(520, .05); }));
   let ringInt = 0, ringStop = 0;
   function stopRing() { clearInterval(ringInt); clearTimeout(ringStop); $('ringBox').hidden = true; }
   function ring(txt) { $('ringTxt').textContent = txt; $('ringBox').hidden = false; const go = () => { beep(880, .15); beep(1100, .15, .2); buzz([150, 80, 150]); }; go(); clearInterval(ringInt); clearTimeout(ringStop); ringInt = setInterval(go, 1200); ringStop = setTimeout(stopRing, 30000); }
   $('ringOff').addEventListener('click', stopRing);
 
-  /* stoper */
   const fmtSw = ms => { const t = Math.floor(ms / 10); return pad(Math.floor(t / 6000)) + ':' + pad(Math.floor(t / 100) % 60) + '.' + pad(t % 100); };
   let swRun = false, swBase = 0, swStartT = 0, swRaf = 0, laps = [];
   const swNow = () => swBase + (swRun ? performance.now() - swStartT : 0);
@@ -1350,7 +1505,6 @@ cDraw();
   $('swReset').addEventListener('click', () => { swBase = 0; swRun = false; laps = []; swDraw(); drawLaps(); swUi(); beep(480, .06); });
   swUi();
 
-  /* minutnik */
   let tMode = 'idle', tLeft = 0, tEnd = 0, tInt = 0;
   const fmtT = ms => { const s = Math.ceil(ms / 1000); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
   function tUi() { const idle = tMode === 'idle'; $('tSet').hidden = !idle; $('tDisp').hidden = idle; $('tStart').textContent = tMode === 'run' ? 'Pauza' : (tMode === 'pause' ? 'Wznów' : 'Start'); $('tReset').disabled = idle; }
@@ -1364,7 +1518,6 @@ cDraw();
   $('tReset').addEventListener('click', () => { clearInterval(tInt); tMode = 'idle'; tUi(); beep(480, .06); });
   tUi();
 
-  /* budzik */
   let alarms = []; try { alarms = JSON.parse(store.get('alarms', '[]')) || []; } catch (e) {}
   const saveAl = () => store.set('alarms', JSON.stringify(alarms));
   function drawAl() { $('aList').hidden = !alarms.length; $('aList').innerHTML = alarms.map((a, i) => `<div class='row static'><span class='atime'>${a.t}</span><span class='aact'><button class='aswitch' role='switch' aria-checked='${a.on}' data-i='${i}' aria-label='Włącz budzik ${a.t}'><span class='sw'></span></button><button class='adel' data-del='${i}' aria-label='Usuń budzik ${a.t}'>✕</button></span></div>`).join(''); }
@@ -1376,10 +1529,9 @@ cDraw();
 
 /* ---------- Zasilanie i uruchamianie ---------- */
 const power = $('power'), bootStatus = $('bootStatus');
-const BOOT_MS = 5000; // czas ładowania
+const BOOT_MS = 5000;
 power.style.setProperty('--boot', BOOT_MS + 'ms');
 
-/* Logo: 4 kafle smoka dryfują osobno i łączą się na sam koniec */
 (() => {
   const css = document.createElement('style');
   css.textContent = `
@@ -1436,7 +1588,7 @@ function boot() {
   closeAll(); lockEl.classList.remove('on');
   clearTimeout(bootTimer); clearInterval(stepTimer);
   power.dataset.state = '';
-  void power.offsetWidth;            // restart animacji logo przy każdym uruchomieniu
+  void power.offsetWidth;
   power.dataset.state = 'boot';
   let step = 0; bootStatus.textContent = BOOT_STEPS[0];
   stepTimer = setInterval(() => {
@@ -1467,8 +1619,6 @@ power.addEventListener('pointerdown', () => { if (power.dataset.state !== 'off')
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
 
 boot();
-
-/* ---------- BAZA DANYCH ---------- */
 </script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
@@ -1485,7 +1635,6 @@ boot();
   });
   const db = getFirestore(app);
 
-  // Stały identyfikator tego urządzenia (zapamiętany w przeglądarce)
   let devId = null;
   try {
     devId = localStorage.getItem('device-id');
@@ -1496,7 +1645,6 @@ boot();
   } catch (e) {}
   if (!devId) devId = 'tmp-' + Math.random().toString(36).slice(2);
 
-  // Rezerwuje końcówkę numeru: true = wolna albo już należy do tego urządzenia
   function claim(suffix) {
     const ref = doc(db, 'urzadzenia', suffix);
     return runTransaction(db, async (t) => {
@@ -1507,7 +1655,6 @@ boot();
     });
   }
 
-  // Pobiera publiczny adres IP urządzenia
   async function getIp() {
     try {
       const c = new AbortController();
@@ -1518,7 +1665,6 @@ boot();
     } catch (e) { return null; }
   }
 
-  // Zapisuje w bazie: numer, IP, nazwa urządzenia, czas (strona admin.html to czyta)
   async function reportIp(num, ip, name) {
     ip = ip || await getIp();
     if (!ip) return;
