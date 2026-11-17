@@ -204,12 +204,19 @@
   .phone[data-theme="dark"] .msg.me { color: #121214; }
   .msg small { display: block; font-size: 11px; opacity: .7; margin-top: 2px; }
 
-  /* Stylistyka aplikacji Mapy */
+  /* Mapy */
   #mapContainer { width: 100%; height: 100%; flex: 1; z-index: 1; border-radius: 0 0 24px 24px; }
   .map-tools { display: flex; gap: 8px; padding: 10px; background: var(--card); border-bottom: 1px solid var(--line); z-index: 10; }
   .map-search { flex: 1; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--win-bg); color: var(--win-text); font: inherit; font-size: 14px; outline: none; }
   .map-btn { padding: 0 14px; height: 36px; border-radius: 18px; border: 0; background: var(--accent); color: #fff; font: inherit; font-size: 14px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; }
   .map-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  /* Muzyka */
+  .album-art { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(45deg, #e91e63, #9c27b0); display: grid; place-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin: 10px auto; transition: transform 0.5s ease; }
+  .album-art.playing { animation: spin 8s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .music-progress { width: 100%; height: 6px; background: var(--line); border-radius: 3px; margin: 15px 0; overflow: hidden; cursor: pointer; }
+  .music-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
 </style>
 </head>
 <body>
@@ -256,6 +263,10 @@
         <div class="icon" style="background:#4caf50"><svg viewBox="0 0 24 24"><path d="M20.5 3l-6 2.25L9 3 3.5 5.25A1 1 0 0 0 3 6.18v14.07a.5.5 0 0 0 .68.46L9 18.75l5.5 2.25 5.5-2.25a.5.5 0 0 0 .32-.46V4.25a1 1 0 0 0-1.32-.95zM15 19.1l-6-2.45V4.9l6 2.45v11.75z"/></svg></div>
         <span>Mapy</span>
       </button>
+      <button class="app" data-open="win-music">
+        <div class="icon" style="background:#e91e63"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+        <span>Muzyka</span>
+      </button>
       <button class="app" data-open="win-browser">
         <div class="icon" style="background:#1e88e5"><svg viewBox="0 0 24 24" style="fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
         <span>Przeglądarka</span>
@@ -265,6 +276,44 @@
         <span>Wiadomości</span>
       </button>
     </section>
+
+    <!-- MUZYKA -->
+    <div class="window" id="win-music" role="dialog" aria-label="Muzyka" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-music" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Muzyka</span>
+      </header>
+      <div class="body" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="album-art" id="mArt">
+            <svg viewBox="0 0 24 24" style="width:60px; height:60px; fill:#fff;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+            <div id="mTitle" style="font-size:18px; font-weight:600;">Synthwave Breeze</div>
+            <div id="mArtist" style="font-size:13px; color:var(--muted); margin-top:4px;">WebOS Beats</div>
+          </div>
+          <div class="music-progress" id="mProg">
+            <div class="music-bar" id="mBar"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:-10px;">
+            <span id="mCur">0:00</span>
+            <span id="mDur">0:30</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:16px; align-items:center; justify-content:center; margin:15px 0;">
+          <button class="cbtn" id="mPrev">⏮</button>
+          <button class="cbtn main" id="mPlay" style="width:56px; height:56px; border-radius:50%; font-size:20px; display:grid; place-items:center;">▶</button>
+          <button class="cbtn" id="mNext">⏭</button>
+        </div>
+
+        <div class="list" style="max-height:160px; overflow:auto;">
+          <button class="row" data-track="0"><span>1. Synthwave Breeze<small>WebOS Beats</small></span></button>
+          <button class="row" data-track="1"><span>2. Chill Hop Rain<small>Lo-Fi Vibes</small></span></button>
+          <button class="row" data-track="2"><span>3. 80s Arcade Rush<small>Retro Wave</small></span></button>
+        </div>
+      </div>
+    </div>
 
     <!-- MAPY -->
     <div class="window" id="win-maps" role="dialog" aria-label="Mapy" aria-hidden="true">
@@ -839,7 +888,6 @@ window.addEventListener('online', initPhoneNumber);
       setTimeout(() => mapInstance.invalidateSize(), 100);
       return;
     }
-    // Domyślne współrzędne: Warszawa
     mapInstance = L.map('mapContainer', { zoomControl: true }).setView([52.2297, 21.0122], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -866,30 +914,75 @@ window.addEventListener('online', initPhoneNumber);
     }
   }
 
-  $('mapSearchBtn').addEventListener('click', () => {
-    searchLocation($('mapSearchIn').value);
-  });
-  $('mapSearchIn').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      searchLocation($('mapSearchIn').value);
-    }
-  });
-
+  $('mapSearchBtn').addEventListener('click', () => searchLocation($('mapSearchIn').value));
+  $('mapSearchIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocation($('mapSearchIn').value); } });
   $('mapLocBtn').addEventListener('click', () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
         mapInstance.setView([lat, lon], 15);
         if (mapMarker) mapInstance.removeLayer(mapMarker);
         mapMarker = L.marker([lat, lon]).addTo(mapInstance).bindPopup('Moja lokalizacja').openPopup();
-      }, () => {
-        alert('Nie można pobrać lokalizacji (sprawdź uprawnienia w przeglądarce).');
-      });
+      }, () => alert('Nie można pobrać lokalizacji.'));
+    } else alert('Geolokalizacja nie jest wspierana.');
+  });
+
+  /* ---------- Muzyka ---------- */
+  const TRACKS = [
+    { title: 'Synthwave Breeze', artist: 'WebOS Beats', baseFreq: 440 },
+    { title: 'Chill Hop Rain', artist: 'Lo-Fi Vibes', baseFreq: 330 },
+    { title: '80s Arcade Rush', artist: 'Retro Wave', baseFreq: 523 }
+  ];
+  let curTrack = 0, isPlaying = false, audioTimer = null, curTime = 0, trackDur = 30;
+
+  function updateTrackUi() {
+    $('mTitle').textContent = TRACKS[curTrack].title;
+    $('mArtist').textContent = TRACKS[curTrack].artist;
+    $('mPlay').textContent = isPlaying ? '⏸' : '▶';
+    $('mArt').classList.toggle('playing', isPlaying);
+  }
+
+  function playSynthMusic() {
+    if (!isPlaying) return;
+    const notes = [0, 2, 4, 7, 9];
+    const note = notes[Math.floor(Math.random() * notes.length)];
+    const freq = TRACKS[curTrack].baseFreq * Math.pow(2, note / 12);
+    beep(freq, 0.2);
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    updateTrackUi();
+    if (isPlaying) {
+      audioTimer = setInterval(() => {
+        curTime++;
+        if (curTime >= trackDur) { curTime = 0; nextTrack(); }
+        $('mBar').style.width = (curTime / trackDur * 100) + '%';
+        $('mCur').textContent = '0:' + String(curTime).padStart(2, '0');
+        playSynthMusic();
+      }, 1000);
     } else {
-      alert('Geolokalizacja nie jest wspierana przez przeglądarkę.');
+      clearInterval(audioTimer);
     }
+  }
+
+  function selectTrack(idx) {
+    curTrack = idx; curTime = 0;
+    $('mBar').style.width = '0%';
+    $('mCur').textContent = '0:00';
+    if (isPlaying) { clearInterval(audioTimer); isPlaying = false; togglePlay(); }
+    else updateTrackUi();
+  }
+
+  function nextTrack() { selectTrack((curTrack + 1) % TRACKS.length); }
+  function prevTrack() { selectTrack((curTrack - 1 + TRACKS.length) % TRACKS.length); }
+
+  $('mPlay').addEventListener('click', togglePlay);
+  $('mNext').addEventListener('click', nextTrack);
+  $('mPrev').addEventListener('click', prevTrack);
+  $('win-music').querySelector('.list').addEventListener('click', e => {
+    const b = e.target.closest('[data-track]');
+    if (b) selectTrack(Number(b.dataset.track));
   });
 
   /* ---------- Kalendarz ---------- */
