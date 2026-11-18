@@ -221,8 +221,8 @@
   .app { position: relative; }
   .chdot { position: absolute; top: -2px; right: 8px; width: 14px; height: 14px; border-radius: 50%; background: #e53935; border: 2px solid #fff; }
   .chdot[hidden] { display: none; }
-  .chboard { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; container-type: inline-size; user-select: none; -webkit-user-select: none; margin: 8px 0; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
-  .chsq { position: relative; display: grid; place-items: center; border: 0; padding: 0; margin: 0; font: inherit; font-size: 30px; font-size: 9.5cqw; line-height: 1; cursor: pointer; min-width: 0; min-height: 0; }
+  .chboard { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; container-type: inline-size; user-select: none; -webkit-user-select: none; margin: 8px 0; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .chsq { width: 100%; height: 100%; position: relative; display: grid; place-items: center; border: 0; padding: 0; margin: 0; font: inherit; font-size: 30px; font-size: 9.5cqw; line-height: 1; cursor: pointer; min-width: 0; min-height: 0; }
   .chsq.l { background: #eeeed2; } .chsq.d { background: #769656; }
   .chsq.lm::before { content: ""; position: absolute; inset: 0; background: rgba(255,214,10,.45); }
   .chsq.sel::before { content: ""; position: absolute; inset: 0; background: rgba(255,214,10,.75); }
@@ -235,6 +235,10 @@
   .chplayer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--card); font-size: 15px; }
   .chplayer.turn { outline: 2px solid var(--accent); }
   .chplayer small { color: var(--muted); }
+  .chrt { display: flex; align-items: center; gap: 8px; }
+  .chclk { min-width: 54px; padding: 4px 8px; border-radius: 8px; background: var(--hover); font-size: 17px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+  .chclk.run { background: var(--accent); color: #fff; }
+  .chclk.low { background: #e53935; color: #fff; }
   .chover, .chpromo { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; background: rgba(0,0,0,.55); padding: 24px; }
   .chover[hidden], .chpromo[hidden] { display: none; }
   .chover .box, .chpromo .box { width: 100%; max-width: 320px; padding: 22px; border-radius: 20px; background: var(--card); color: var(--win-text); text-align: center; }
@@ -663,6 +667,10 @@
         <div id="chLobby">
           <p class="bhint" id="chInfo" style="margin-bottom:12px"></p>
           <div class="taskadd" style="margin-bottom:10px"><input class="ntitlein" id="chTo" type="tel" inputmode="tel" maxlength="12" placeholder="Numer rywala, np. 600-123" aria-label="Numer rywala"></div>
+          <p class="section-title" style="margin:6px 4px 8px">Czas na gracza</p>
+          <div class="tabs" id="chTc" role="radiogroup" aria-label="Czas na gracza" style="margin-bottom:14px">
+            <button class="tab" data-tc="3" role="radio">3 min</button><button class="tab" data-tc="5" role="radio">5 min</button><button class="tab" data-tc="10" role="radio">10 min</button><button class="tab" data-tc="0" role="radio">Bez limitu</button>
+          </div>
           <button class="cbtn main" id="chGo" style="width:100%">Rozpocznij partię</button>
           <p class="bhint" id="chMsg" style="margin-top:12px"></p>
         </div>
@@ -1804,6 +1812,42 @@ boot();
   const show = (id, on) => { $(id).hidden = !on; };
   const msg = t => { $('chMsg').textContent = t || ''; };
 
+  /* ---------- zegary ---------- */
+  let tcSel = Number(store.get('chtc', 10)); if (![0, 3, 5, 10].includes(tcSel)) tcSel = 10;
+  function paintTc() { document.querySelectorAll('#chTc .tab').forEach(b => { const on = Number(b.dataset.tc) === tcSel; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
+  $('chTc').addEventListener('click', e => { const b = e.target.closest('.tab'); if (!b) return; tcSel = Number(b.dataset.tc); store.set('chtc', String(tcSel)); paintTc(); beep(520, .05); });
+  paintTc();
+  const tcTxt = g => g.tc > 0 ? g.tc + ' min na gracza' : 'bez limitu czasu';
+  const fmtClk = ms => { const t = Math.ceil(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+  function left(g, side, now) {
+    const base = side === 'w' ? g.wt : g.bt;
+    return Math.max(0, base - (g.status === 'active' && g.turn === side ? now - g.t : 0));
+  }
+  function canMate(b, w) {
+    let minors = 0;
+    for (const p of b) { if (!p || isW(p) !== (w === 'w')) continue; const t = p.toLowerCase(); if (t === 'p' || t === 'r' || t === 'q') return true; if (t === 'b' || t === 'n') minors++; }
+    return minors >= 2;
+  }
+  let flagged = '';
+  function flag(g) {
+    if (!fb || flagged === g.id) return; flagged = g.id;
+    const loser = g.turn, winner = loser === 'w' ? 'b' : 'w', draw = !canMate(parse(g.fen).b, winner);
+    fb.chess.save(g.id, { status: 'finished', result: { winner: draw ? 'draw' : winner, reason: 'time' }, [loser === 'w' ? 'wt' : 'bt']: 0, t: Date.now() })
+      .catch(e => { flagged = ''; console.error('Szachy czas:', e); });
+  }
+  function tickClocks() {
+    const g = view(), now = Date.now();
+    if (g && g.status !== 'invite') document.querySelectorAll('#chGame .chclk').forEach(el => {
+      const side = el.dataset.s;
+      if (!(g.tc > 0)) { el.textContent = '∞'; return; }
+      const ms = left(g, side, now), act = g.status === 'active' && !over;
+      el.textContent = fmtClk(ms);
+      el.classList.toggle('run', act && g.turn === side);
+      el.classList.toggle('low', act && ms < 30000);
+    });
+    if (!over && cur && cur.status === 'active' && cur.tc > 0 && left(cur, cur.turn, now) <= 0) flag(cur);
+  }
+
   /* powiadomienie (baner na górze) */
   const ban = document.createElement('div');
   ban.hidden = true; ban.setAttribute('role', 'alert');
@@ -1859,14 +1903,15 @@ boot();
     show('chWait', !over && !!cur && cur.status === 'invite' && cur.host === me);
     show('chInv', !over && !!cur && cur.status === 'invite' && cur.guest === me);
     show('chGame', !!g && (over || g.status !== 'invite'));
-    if (!g) return;
+    if (!over) $('chOver').hidden = true;
+    if (!g) { $('chPromo').hidden = true; return; }
     if (!over && cur.status === 'invite') {
-      if (cur.host === me) $('chWaitTxt').textContent = 'Wysłano zaproszenie do ' + name(cur.guest) + '. Czekam na akceptację…';
-      else $('chInvTxt').textContent = name(cur.host) + ' zaprasza Cię do partii szachów. Gospodarz gra białymi.';
+      if (cur.host === me) $('chWaitTxt').textContent = 'Wysłano zaproszenie do ' + name(cur.guest) + ' (' + tcTxt(cur) + '). Czekam na akceptację…';
+      else $('chInvTxt').textContent = name(cur.host) + ' zaprasza Cię do partii szachów (' + tcTxt(cur) + '). Gospodarz gra białymi.';
       return;
     }
     const role = roleOf(g), opp = oppOf(g), s = parse(g.fen);
-    const lab = (n, r, on) => '<span>' + (r === 'w' ? '⚪ ' : '⚫ ') + n + ' <small>' + (r === 'w' ? 'białe' : 'czarne') + '</small></span><span>' + (on ? '●' : '') + '</span>';
+    const lab = (n, r, on) => '<span>' + (r === 'w' ? '⚪ ' : '⚫ ') + n + ' <small>' + (r === 'w' ? 'białe' : 'czarne') + '</small></span><span class="chrt"><b class="chclk" data-s="' + r + '"></b>' + (on ? '<span>●</span>' : '') + '</span>';
     const act = !over && g.status === 'active';
     $('chTop').innerHTML = lab(name(opp), role === 'w' ? 'b' : 'w', act && g.turn !== role);
     $('chBot').innerHTML = lab('Ty', role, act && g.turn === role);
@@ -1874,12 +1919,12 @@ boot();
     $('chBot').classList.toggle('turn', act && g.turn === role);
     $('chStat').textContent = over ? 'Partia zakończona.' : (g.turn === role ? 'Twój ruch' : 'Ruch przeciwnika') + (inCheck(s, s.turn) ? ' · Szach!' : '');
     $('chRes').hidden = !!over;
-    drawBoard(s, g, role);
+    drawBoard(s, g, role); tickClocks();
     const o = $('chOver');
     if (over) {
       const w = over.result.winner, why = over.result.reason;
       $('chOverT').textContent = w === 'draw' ? '🤝 Remis' : w === role ? '🏆 Wygrałeś!' : '😔 Przegrałeś';
-      $('chOverD').textContent = ({ mat: 'Szach-mat.', pat: 'Pat.', '50': 'Zasada 50 ruchów.', material: 'Za mało figur do mata.', resign: w === role ? 'Przeciwnik się poddał.' : 'Poddałeś partię.' }[why] || '') + ' Partia została usunięta z serwera.';
+      $('chOverD').textContent = ({ mat: 'Szach-mat.', pat: 'Pat.', '50': 'Zasada 50 ruchów.', material: 'Za mało figur do mata.', resign: w === role ? 'Przeciwnik się poddał.' : 'Poddałeś partię.', time: w === 'draw' ? 'Koniec czasu, ale za mało figur do mata.' : w === role ? 'Przeciwnikowi skończył się czas.' : 'Skończył Ci się czas.' }[why] || '') + ' Partia została usunięta z serwera.';
       o.hidden = false;
     } else o.hidden = true;
   }
@@ -1906,9 +1951,11 @@ boot();
   /* ---------- akcje ---------- */
   function doMove(m) {
     const g = cur; if (!g) return;
-    const n = apply(parse(g.fen), m), out = outcome(n);
+    const n = apply(parse(g.fen), m), out = outcome(n), role = roleOf(g), now = Date.now();
     sel = -1; targets = [];
-    fb.chess.save(g.id, { fen: ser(n), turn: n.turn, last: [m.from, m.to], t: Date.now(), status: out ? 'finished' : 'active', result: out || null })
+    const upd = { fen: ser(n), turn: n.turn, last: [m.from, m.to], t: now, status: out ? 'finished' : 'active', result: out || null };
+    if (g.tc > 0) { const rem = left(g, role, now); if (rem <= 0) return flag(g); upd[role === 'w' ? 'wt' : 'bt'] = rem; }
+    fb.chess.save(g.id, upd)
       .catch(e => { console.error('Szachy zapis:', e); $('chStat').textContent = 'Nie udało się zapisać ruchu. Sprawdź internet.'; });
   }
   $('chBoard').addEventListener('click', e => {
@@ -1943,7 +1990,7 @@ boot();
     $('chGo').disabled = true;
     try {
       if (!(await withTimeout(fb.chess.exists(n.slice(4)), 8000))) { msg('Nie ma telefonu o numerze ' + n + '.'); return; }
-      await withTimeout(fb.chess.save(fb.chess.newId(), { host: me, guest: n, status: 'invite', fen: START, turn: 'w', last: null, result: null, ack: {}, t: Date.now() }), 10000);
+      await withTimeout(fb.chess.save(fb.chess.newId(), { host: me, guest: n, status: 'invite', fen: START, turn: 'w', last: null, result: null, ack: {}, tc: tcSel, wt: tcSel * 60000, bt: tcSel * 60000, t: Date.now() }), 10000);
       $('chTo').value = ''; beep(660, .08);
     } catch (e) { msg('Nie udało się wysłać zaproszenia. Sprawdź internet.'); }
     finally { $('chGo').disabled = false; }
@@ -1957,8 +2004,9 @@ boot();
     if (!cur || cur.status !== 'active' || !confirm('Na pewno chcesz się poddać?')) return;
     fb.chess.save(cur.id, { status: 'finished', result: { winner: roleOf(cur) === 'w' ? 'b' : 'w', reason: 'resign' }, t: Date.now() }).catch(() => {});
   });
-  $('chOk').addEventListener('click', () => { over = null; sel = -1; targets = []; sync(); });
+  $('chOk').addEventListener('click', () => { over = null; sel = -1; targets = []; $('chOver').hidden = true; sync(); });
   appBtn.addEventListener('click', () => { render(); updateDot(); });
+  setInterval(tickClocks, 250);
 
   /* ---------- start po połączeniu z Firebase i nadaniu numeru ---------- */
   fbReady.then(f => {
