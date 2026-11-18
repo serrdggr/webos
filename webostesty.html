@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WebOS</title>
+<!-- Leaflet CSS do obsługi map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root { --wall-a: #1d2b64; --wall-b: #5b3a8c; --wall-c: #f2845c; --text: #fff;
     --win-bg: #f4f5f7; --win-text: #1c1c21; --card: #fff; --line: #ececf0; --hover: #f0f1f4; --muted: #8a8d96; --head: #607d8b; --accent: #607d8b; }
@@ -76,7 +78,6 @@
   .wall[aria-checked="true"] .check { visibility: visible; }
   .wall:focus-visible { outline: 3px solid var(--win-text); outline-offset: 2px; }
   .row.danger { color: #e53935; }
-  /* odcisk palca */
   .fp { position: relative; -webkit-tap-highlight-color: transparent; width: 112px; height: 112px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; cursor: pointer; overflow: hidden; transition: transform .15s, border-color .2s, background .2s; }
   .fp:hover { background: rgba(255,255,255,.2); }
   .fp:active { transform: scale(.94); }
@@ -123,7 +124,6 @@
   #power .by { margin-top: 8px; font-size: 12px; letter-spacing: 1px; color: #fff; }
   .nav { position: relative; z-index: 6; display: flex; justify-content: center; padding: 6px 0 12px; }
   .nav i { width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.7); }
-  /* kalendarz */
   .calnav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 18px; }
   .calbtn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--card); color: inherit; font-size: 22px; cursor: pointer; }
   .calbtn:hover { background: var(--hover); }
@@ -137,7 +137,6 @@
   .hour:last-child { border-bottom: 0; }
   .hh { width: 46px; flex: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .note { flex: 1; min-width: 0; padding: 10px 0; border: 0; background: none; color: var(--win-text); font: inherit; font-size: 15px; outline: none; }
-  /* zegar */
   [hidden] { display: none !important; }
   .tabs { display: flex; gap: 6px; background: var(--card); border-radius: 14px; padding: 4px; margin-bottom: 20px; }
   .tab { flex: 1; padding: 10px 0; border: 0; border-radius: 10px; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
@@ -158,7 +157,6 @@
   .adel { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; }
   #ringBox { position: absolute; top: 44px; left: 12px; right: 12px; z-index: 17; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: #e53935; color: #fff; font-size: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
   #ringOff { border: 0; border-radius: 12px; padding: 8px 16px; background: #fff; color: #e53935; font: inherit; font-weight: 500; cursor: pointer; }
-  /* kalkulator */
   .cdisp { text-align: right; padding: 8px 6px 18px; min-height: 120px; display: flex; flex-direction: column; justify-content: flex-end; }
   .cexpr { font-size: 16px; color: var(--muted); min-height: 22px; word-break: break-all; }
   .cres { font-size: 56px; font-weight: 300; line-height: 1.1; word-break: break-all; font-variant-numeric: tabular-nums; }
@@ -169,7 +167,6 @@
   .ck.op { background: var(--accent); color: #fff; }
   .ck.eq { background: #f2845c; color: #fff; }
   .phone[data-theme="dark"] .ck.op { color: #121214; }
-  /* notatki */
   .ntext { width: 100%; min-height: 200px; padding: 14px 16px; border: 0; border-radius: 16px; background: var(--card); color: var(--win-text); font: inherit; font-size: 16px; line-height: 1.5; resize: none; outline: none; }
   .nitem > span:first-child { min-width: 0; flex: 1; }
   .ntitle, .nprev { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -184,14 +181,12 @@
   .task.done .ttext { text-decoration: line-through; color: var(--muted); }
   .taskadd { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
   .taskadd .ntitlein { margin-bottom: 0; font-size: 16px; font-weight: 400; flex: 1; min-width: 0; }
-  /* rysowanie */
   .dcanvas { display: block; width: 100%; height: 340px; border-radius: 16px; background: #fff; touch-action: none; cursor: crosshair; box-shadow: 0 0 0 1px var(--line); }
   .dcolors { display: flex; justify-content: space-between; gap: 6px; margin: 16px 2px; }
   .dcol { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
   .dcol[aria-checked='true'] { outline: 3px solid var(--win-text); outline-offset: 2px; }
   .dbtns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .dbtns .cbtn { min-width: 0; padding: 10px 14px; font-size: 14px; }
-  /* przeglądarka */
   .window .bbody { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
   .btool { display: flex; align-items: center; gap: 4px; padding: 8px 10px; background: var(--card); border-bottom: 1px solid var(--line); }
   .bbtn { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; background: none; color: var(--win-text); font-size: 20px; cursor: pointer; }
@@ -202,7 +197,6 @@
   .bframe { flex: 1; width: 100%; border: 0; background: #fff; }
   .bnote { padding: 8px 12px; font-size: 12px; text-align: center; background: var(--card); color: var(--muted); border-top: 1px solid var(--line); }
   .bnote a { color: var(--accent); }
-  /* wiadomosci */
   .chatbody { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
   #msgs { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
   .msg { max-width: 78%; padding: 8px 12px; border-radius: 16px; background: var(--card); align-self: flex-start; word-break: break-word; }
@@ -210,16 +204,44 @@
   .phone[data-theme="dark"] .msg.me { color: #121214; }
   .msg small { display: block; font-size: 11px; opacity: .7; margin-top: 2px; }
 
-  /* SZACHY STYLE */
-  .chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; aspect-ratio: 1; border: 3px solid var(--accent); border-radius: 8px; overflow: hidden; margin: 10px 0; }
-  .chess-board.flipped { transform: rotate(180deg); }
-  .chess-board.flipped .sq { transform: rotate(180deg); }
-  .sq { display: flex; justify-content: center; align-items: center; font-size: 32px; user-select: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .sq.w { background: #eeeed2; color: #000; }
-  .sq.b { background: #769656; color: #000; }
-  .sq.sel { background: #baca44 !important; }
-  .sq.hint { position: relative; }
-  .sq.hint::after { content: ""; width: 12px; height: 12px; background: rgba(0,0,0,0.25); border-radius: 50%; }
+  /* Mapy */
+  #mapContainer { width: 100%; height: 100%; flex: 1; z-index: 1; border-radius: 0 0 24px 24px; }
+  .map-tools { display: flex; gap: 8px; padding: 10px; background: var(--card); border-bottom: 1px solid var(--line); z-index: 10; }
+  .map-search { flex: 1; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--win-bg); color: var(--win-text); font: inherit; font-size: 14px; outline: none; }
+  .map-btn { padding: 0 14px; height: 36px; border-radius: 18px; border: 0; background: var(--accent); color: #fff; font: inherit; font-size: 14px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; }
+  .map-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  /* Muzyka */
+  .album-art { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(45deg, #e91e63, #9c27b0); display: grid; place-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin: 10px auto; transition: transform 0.5s ease; }
+  .album-art.playing { animation: spin 8s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .music-progress { width: 100%; height: 6px; background: var(--line); border-radius: 3px; margin: 15px 0; overflow: hidden; cursor: pointer; }
+  .music-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
+  /* ===== SZACHY ===== */
+  .app { position: relative; }
+  .chdot { position: absolute; top: -2px; right: 8px; width: 14px; height: 14px; border-radius: 50%; background: #e53935; border: 2px solid #fff; }
+  .chdot[hidden] { display: none; }
+  .chboard { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; container-type: inline-size; user-select: none; -webkit-user-select: none; margin: 8px 0; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .chsq { position: relative; display: grid; place-items: center; border: 0; padding: 0; margin: 0; font: inherit; font-size: 30px; font-size: 9.5cqw; line-height: 1; cursor: pointer; min-width: 0; min-height: 0; }
+  .chsq.l { background: #eeeed2; } .chsq.d { background: #769656; }
+  .chsq.lm::before { content: ""; position: absolute; inset: 0; background: rgba(255,214,10,.45); }
+  .chsq.sel::before { content: ""; position: absolute; inset: 0; background: rgba(255,214,10,.75); }
+  .chsq.chk::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgba(229,57,53,.95) 25%, rgba(229,57,53,0) 75%); }
+  .chsq.tg::after { content: ""; position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(0,0,0,.28); }
+  .chsq.tg.cap::after { width: 86%; height: 86%; background: none; border: 4px solid rgba(0,0,0,.28); }
+  .chp { position: relative; z-index: 1; }
+  .chp.pw { color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 2px #000; }
+  .chp.pb { color: #1a1a1a; text-shadow: 0 0 1px rgba(255,255,255,.6); }
+  .chplayer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--card); font-size: 15px; }
+  .chplayer.turn { outline: 2px solid var(--accent); }
+  .chplayer small { color: var(--muted); }
+  .chover, .chpromo { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; background: rgba(0,0,0,.55); padding: 24px; }
+  .chover[hidden], .chpromo[hidden] { display: none; }
+  .chover .box, .chpromo .box { width: 100%; max-width: 320px; padding: 22px; border-radius: 20px; background: var(--card); color: var(--win-text); text-align: center; }
+  .chover h3 { font-size: 24px; margin-bottom: 8px; } .chover p { color: var(--muted); font-size: 14px; margin-bottom: 18px; line-height: 1.4; }
+  .chpromo .pr { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+  .chpromo .pr button { width: 56px; height: 56px; border: 0; border-radius: 14px; background: #769656; font-size: 36px; cursor: pointer; }
+  .chinv { text-align: center; padding: 10px 0; } .chinv p { font-size: 17px; margin-bottom: 18px; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -262,6 +284,14 @@
         <div class="icon" style="background:#00897b"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 3a9 9 0 0 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4c2 0 3.6-1.6 3.6-3.6C21 6.5 17 3 12 3zM6.5 12a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></div>
         <span>Rysowanie</span>
       </button>
+      <button class="app" data-open="win-maps">
+        <div class="icon" style="background:#4caf50"><svg viewBox="0 0 24 24"><path d="M20.5 3l-6 2.25L9 3 3.5 5.25A1 1 0 0 0 3 6.18v14.07a.5.5 0 0 0 .68.46L9 18.75l5.5 2.25 5.5-2.25a.5.5 0 0 0 .32-.46V4.25a1 1 0 0 0-1.32-.95zM15 19.1l-6-2.45V4.9l6 2.45v11.75z"/></svg></div>
+        <span>Mapy</span>
+      </button>
+      <button class="app" data-open="win-music">
+        <div class="icon" style="background:#e91e63"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+        <span>Muzyka</span>
+      </button>
       <button class="app" data-open="win-browser">
         <div class="icon" style="background:#1e88e5"><svg viewBox="0 0 24 24" style="fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
         <span>Przeglądarka</span>
@@ -271,36 +301,64 @@
         <span>Wiadomości</span>
       </button>
       <button class="app" data-open="win-chess">
-        <div class="icon" style="background:#3e2723"><svg viewBox="0 0 24 24"><path d="M19 22H5v-2h14v2zm-2-4H7v-2h10v2zm-1-8c0 1.5-1 2.8-2.3 3.5 1.4.6 2.3 2 2.3 3.5H8c0-1.5.9-2.9 2.3-3.5C9 12.8 8 11.5 8 10c0-2.2 1.8-4 4-4s4 1.8 4 4zM12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg></div>
+        <div class="icon" style="background:#6d4c41"><svg viewBox="0 0 24 24"><path d="M19 22H5v-2h14v2zM17.16 8.26A4.99 4.99 0 0 0 13 4.1V3h1V1h-4v2h1v1.1a5 5 0 0 0-4.16 4.16c-.2 1.2.2 2.4 1 3.3L8.5 13H7v2h1.1l-.6 3h9l-.6-3H17v-2h-1.5l-.34-1.44c.8-.9 1.2-2.1 1-3.3z"/></svg></div>
         <span>Szachy</span>
       </button>
     </section>
 
-    <!-- SZACHY WINDOW -->
-    <div class="window" id="win-chess" role="dialog" aria-label="Szachy Online" aria-hidden="true">
+    <!-- MUZYKA -->
+    <div class="window" id="win-music" role="dialog" aria-label="Muzyka" aria-hidden="true">
       <header>
-        <button class="back" data-close="win-chess" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
-        <span>Szachy Online</span>
+        <button class="back" data-close="win-music" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Muzyka</span>
       </header>
-      <div class="body" style="display:flex; flex-direction:column; align-items:center;">
-        <div id="chessLobby" style="width:100%; text-align:center;">
-          <p class="section-title" style="margin-top:10px;">Zagraj w szachy ze znajomym online!</p>
-          <div class="taskadd" style="margin:20px 0;">
-            <input class="ntitlein" id="chessOpponentNum" type="tel" placeholder="Numer gracza, np. 600-123" style="font-size:15px;" />
-            <button class="cbtn main" id="chessStartBtn">Wzywaj</button>
+      <div class="body" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="album-art" id="mArt">
+            <svg viewBox="0 0 24 24" style="width:60px; height:60px; fill:#fff;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
           </div>
-          <p class="bhint" id="chessLobbyStatus" style="color:var(--muted); font-size:13px;"></p>
+          <div style="text-align:center; margin-top:10px;">
+            <div id="mTitle" style="font-size:18px; font-weight:600;">Synthwave Breeze</div>
+            <div id="mArtist" style="font-size:13px; color:var(--muted); margin-top:4px;">WebOS Beats</div>
+          </div>
+          <div class="music-progress" id="mProg">
+            <div class="music-bar" id="mBar"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:-10px;">
+            <span id="mCur">0:00</span>
+            <span id="mDur">0:30</span>
+          </div>
         </div>
 
-        <div id="chessGame" style="width:100%; display:none; flex-direction:column; align-items:center;">
-          <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:6px; font-size:14px; font-weight:600;">
-            <span id="chessPlayerWhite">Białe: -</span>
-            <span id="chessPlayerBlack">Czarne: -</span>
-          </div>
-          <div id="chessStatus" style="margin-bottom:8px; font-size:14px; color:var(--accent); font-weight:bold;">Tura: Białe</div>
-          <div class="chess-board" id="chessBoard"></div>
-          <button class="cbtn danger" id="chessResignBtn" style="margin-top:14px; background:#e53935; color:#fff;">Poddaj się / Zakończ</button>
+        <div style="display:flex; gap:16px; align-items:center; justify-content:center; margin:15px 0;">
+          <button class="cbtn" id="mPrev">⏮</button>
+          <button class="cbtn main" id="mPlay" style="width:56px; height:56px; border-radius:50%; font-size:20px; display:grid; place-items:center;">▶</button>
+          <button class="cbtn" id="mNext">⏭</button>
         </div>
+
+        <div class="list" style="max-height:160px; overflow:auto;">
+          <button class="row" data-track="0"><span>1. Synthwave Breeze<small>WebOS Beats</small></span></button>
+          <button class="row" data-track="1"><span>2. Chill Hop Rain<small>Lo-Fi Vibes</small></span></button>
+          <button class="row" data-track="2"><span>3. 80s Arcade Rush<small>Retro Wave</small></span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPY -->
+    <div class="window" id="win-maps" role="dialog" aria-label="Mapy" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-maps" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Mapy</span>
+      </header>
+      <div class="body bbody">
+        <div class="map-tools">
+          <input class="map-search" id="mapSearchIn" type="text" placeholder="Szukaj adresu lub miasta…" aria-label="Szukaj miejsca">
+          <button class="map-btn" id="mapSearchBtn">Szukaj</button>
+          <button class="map-btn" id="mapLocBtn" title="Moja lokalizacja" aria-label="Moja lokalizacja">
+            <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          </button>
+        </div>
+        <div id="mapContainer"></div>
       </div>
     </div>
 
@@ -595,6 +653,39 @@
     </div>
     <div id='ringBox' role='alert' hidden><span id='ringTxt'></span><button id='ringOff'>OK</button></div>
 
+    <!-- SZACHY -->
+    <div class="window" id="win-chess" role="dialog" aria-label="Szachy" aria-hidden="true">
+      <header>
+        <button class="back" data-close="win-chess" aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <span>Szachy online</span>
+      </header>
+      <div class="body">
+        <div id="chLobby">
+          <p class="bhint" id="chInfo" style="margin-bottom:12px"></p>
+          <div class="taskadd" style="margin-bottom:10px"><input class="ntitlein" id="chTo" type="tel" inputmode="tel" maxlength="12" placeholder="Numer rywala, np. 600-123" aria-label="Numer rywala"></div>
+          <button class="cbtn main" id="chGo" style="width:100%">Rozpocznij partię</button>
+          <p class="bhint" id="chMsg" style="margin-top:12px"></p>
+        </div>
+        <div id="chWait" hidden>
+          <div class="chinv"><p id="chWaitTxt"></p><button class="cbtn" id="chCancel">Anuluj zaproszenie</button></div>
+        </div>
+        <div id="chInv" hidden>
+          <div class="chinv"><p id="chInvTxt"></p>
+            <div class="btns"><button class="cbtn main" id="chAcc">Akceptuj</button><button class="cbtn" id="chDec">Odrzuć</button></div>
+          </div>
+        </div>
+        <div id="chGame" hidden>
+          <div class="chplayer" id="chTop"></div>
+          <div class="chboard" id="chBoard"></div>
+          <div class="chplayer" id="chBot"></div>
+          <p class="bhint" id="chStat" style="margin:12px 0"></p>
+          <button class="cbtn" id="chRes" style="width:100%">Poddaj się</button>
+        </div>
+      </div>
+      <div class="chpromo" id="chPromo" hidden><div class="box"><b>Promocja pionka</b><div class="pr" id="chPromoBtns"></div></div></div>
+      <div class="chover" id="chOver" hidden><div class="box"><h3 id="chOverT"></h3><p id="chOverD"></p><button class="cbtn main" id="chOk">OK</button></div></div>
+    </div>
+
     <!-- EKRAN BLOKADY -->
     <div id="lock" role="dialog" aria-label="Ekran blokady">
       <div class="clock">
@@ -618,6 +709,8 @@
     <div id="dim"></div>
   </main>
 
+<!-- Biblioteka Leaflet JS do Map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const $ = id => document.getElementById(id);
   const store = {
@@ -669,7 +762,7 @@
     });
   }
 
-/* ---------- Numer telefonu (unikalny, z Firebase) ---------- */
+/* ---------- Numer telefonu ---------- */
 const numEl = $('phoneNum');
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 let fbResolve;
@@ -692,7 +785,7 @@ async function initPhoneNumber() {
   try {
     const fb = await withTimeout(fbReady, 8000);
     const num = await withTimeout(fb.claimNumber(cached), 15000);
-    store.set('phone-num', num); showNum(num); smsInfo(); smsListen(); initChessListeners();
+    store.set('phone-num', num); showNum(num); smsInfo(); smsListen();
   } catch (e) {
     if (!cached) { numEl.textContent = 'Nr tel.: brak sieci'; $('infoNum').textContent = 'brak sieci'; }
   }
@@ -705,7 +798,11 @@ window.addEventListener('online', initPhoneNumber);
   const setOpen = (id, on) => {
     const w = $(id); if (!w) return;
     w.classList.toggle('open', on); w.setAttribute('aria-hidden', String(!on));
-    if (on) { if (id === 'win-info') $('infoRes').textContent = innerWidth + ' × ' + innerHeight; if (id === 'win-finger') resetEnrollUi(); }
+    if (on) {
+      if (id === 'win-info') $('infoRes').textContent = innerWidth + ' × ' + innerHeight;
+      if (id === 'win-finger') resetEnrollUi();
+      if (id === 'win-maps') initMap();
+    }
   };
   const closeTop = () => { const o = [...document.querySelectorAll('.window.open')]; if (o.length) setOpen(o[o.length - 1].id, false); };
   const closeAll = () => document.querySelectorAll('.window.open').forEach(w => setOpen(w.id, false));
@@ -846,6 +943,110 @@ window.addEventListener('online', initPhoneNumber);
   lockNow.addEventListener('click', showLock);
   refreshSecurity();
 
+  /* ---------- Mapy ---------- */
+  let mapInstance = null, mapMarker = null;
+  function initMap() {
+    if (mapInstance) {
+      setTimeout(() => mapInstance.invalidateSize(), 100);
+      return;
+    }
+    mapInstance = L.map('mapContainer', { zoomControl: true }).setView([52.2297, 21.0122], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(mapInstance);
+  }
+
+  async function searchLocation(query) {
+    if (!query.trim()) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        mapInstance.setView([lat, lon], 14);
+        if (mapMarker) mapInstance.removeLayer(mapMarker);
+        mapMarker = L.marker([lat, lon]).addTo(mapInstance).bindPopup(data[0].display_name).openPopup();
+      } else {
+        alert('Nie znaleziono miejsca.');
+      }
+    } catch (e) {
+      alert('Błąd podczas wyszukiwania.');
+    }
+  }
+
+  $('mapSearchBtn').addEventListener('click', () => searchLocation($('mapSearchIn').value));
+  $('mapSearchIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocation($('mapSearchIn').value); } });
+  $('mapLocBtn').addEventListener('click', () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        mapInstance.setView([lat, lon], 15);
+        if (mapMarker) mapInstance.removeLayer(mapMarker);
+        mapMarker = L.marker([lat, lon]).addTo(mapInstance).bindPopup('Moja lokalizacja').openPopup();
+      }, () => alert('Nie można pobrać lokalizacji.'));
+    } else alert('Geolokalizacja nie jest wspierana.');
+  });
+
+  /* ---------- Muzyka ---------- */
+  const TRACKS = [
+    { title: 'Synthwave Breeze', artist: 'WebOS Beats', baseFreq: 440 },
+    { title: 'Chill Hop Rain', artist: 'Lo-Fi Vibes', baseFreq: 330 },
+    { title: '80s Arcade Rush', artist: 'Retro Wave', baseFreq: 523 }
+  ];
+  let curTrack = 0, isPlaying = false, audioTimer = null, curTime = 0, trackDur = 30;
+
+  function updateTrackUi() {
+    $('mTitle').textContent = TRACKS[curTrack].title;
+    $('mArtist').textContent = TRACKS[curTrack].artist;
+    $('mPlay').textContent = isPlaying ? '⏸' : '▶';
+    $('mArt').classList.toggle('playing', isPlaying);
+  }
+
+  function playSynthMusic() {
+    if (!isPlaying) return;
+    const notes = [0, 2, 4, 7, 9];
+    const note = notes[Math.floor(Math.random() * notes.length)];
+    const freq = TRACKS[curTrack].baseFreq * Math.pow(2, note / 12);
+    beep(freq, 0.2);
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    updateTrackUi();
+    if (isPlaying) {
+      audioTimer = setInterval(() => {
+        curTime++;
+        if (curTime >= trackDur) { curTime = 0; nextTrack(); }
+        $('mBar').style.width = (curTime / trackDur * 100) + '%';
+        $('mCur').textContent = '0:' + String(curTime).padStart(2, '0');
+        playSynthMusic();
+      }, 1000);
+    } else {
+      clearInterval(audioTimer);
+    }
+  }
+
+  function selectTrack(idx) {
+    curTrack = idx; curTime = 0;
+    $('mBar').style.width = '0%';
+    $('mCur').textContent = '0:00';
+    if (isPlaying) { clearInterval(audioTimer); isPlaying = false; togglePlay(); }
+    else updateTrackUi();
+  }
+
+  function nextTrack() { selectTrack((curTrack + 1) % TRACKS.length); }
+  function prevTrack() { selectTrack((curTrack - 1 + TRACKS.length) % TRACKS.length); }
+
+  $('mPlay').addEventListener('click', togglePlay);
+  $('mNext').addEventListener('click', nextTrack);
+  $('mPrev').addEventListener('click', prevTrack);
+  $('win-music').querySelector('.list').addEventListener('click', e => {
+    const b = e.target.closest('[data-track]');
+    if (b) selectTrack(Number(b.dataset.track));
+  });
+
   /* ---------- Kalendarz ---------- */
   let notes = {};
   try { notes = JSON.parse(store.get('cal', '{}')) || {}; } catch (e) {}
@@ -901,7 +1102,7 @@ window.addEventListener('online', initPhoneNumber);
   }
   function bGo(q) { const u = bNorm(q); if (!u) return; bHist = bHist.slice(0, bIdx + 1); bHist.push(u); bIdx = bHist.length - 1; bShow(); }
   $('bBack').addEventListener('click', () => { if (bIdx >= 0) { bIdx--; bShow(); } });
-  $('bFwd').addEventListener('click', () => { if (bIdx >= bHist.length - 1) { bIdx++; bShow(); } });
+  $('bFwd').addEventListener('click', () => { if (bIdx < bHist.length - 1) { bIdx++; bShow(); } });
   $('bReload').addEventListener('click', () => { if (bIdx >= 0) $('bFrame').src = bHist[bIdx]; });
   $('bHomeBtn').addEventListener('click', () => { bIdx = -1; bShow(); });
   $('bUrl').addEventListener('focus', () => $('bUrl').select());
@@ -909,7 +1110,7 @@ window.addEventListener('online', initPhoneNumber);
   $('bHome').addEventListener('click', e => { const b = e.target.closest('[data-url]'); if (b) { beep(520, .05); bGo(b.dataset.url); } });
   bShow();
 
-/* ---------- Wiadomości (Firebase) ---------- */
+/* ---------- Wiadomości ---------- */
 const SMS_MAX = 300;
 
 let sms = {}; try { sms = JSON.parse(store.get('sms', '{}')) || {}; } catch (e) {}
@@ -970,7 +1171,7 @@ function smsDraw(forceBottom) {
   const frag = document.createDocumentFragment();
   ((sms[smsCur] || {}).m || []).forEach(g => {
     const d = document.createElement('div'); d.className = 'msg' + (g.f === 'me' ? ' me' : '');
-    d.innerHTML = g.x; // Wsparacie dla linków w SMS (np. zaproszenie do szachów)
+    d.textContent = g.x;
     const s = document.createElement('small'); s.textContent = smsTime(g.t);
     d.appendChild(s); frag.appendChild(d);
   });
@@ -1027,7 +1228,7 @@ function smsNotify(num, text) {
       const k = nums[0];
       smsBannerNum = k;
       smsBannerTitle.textContent = 'Nowa wiadomość od ' + cname(k) + (pend[k].n > 1 ? ' (' + pend[k].n + ')' : '');
-      smsBannerBody.textContent = pend[k].x.replace(/<[^>]*>/g, '');
+      smsBannerBody.textContent = pend[k].x;
     } else {
       smsBannerNum = '';
       smsBannerTitle.textContent = total + ' nowych wiadomości';
@@ -1213,7 +1414,7 @@ document.addEventListener('keydown', e => {
 });
 
 dToolUi(); dBtnState();
-  
+
   /* ---------- Notatki ---------- */
   let nts = []; try { nts = JSON.parse(store.get('notesapp', '[]')) || []; } catch (e) {}
   let nCur = null;
@@ -1348,14 +1549,13 @@ document.addEventListener('keydown', e => {
 
 cDraw();
 
-  /* ---------- Zegar: stoper, minutnik, budzik ---------- */
+  /* ---------- Zegar ---------- */
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab)); beep(520, .05); }));
   let ringInt = 0, ringStop = 0;
   function stopRing() { clearInterval(ringInt); clearTimeout(ringStop); $('ringBox').hidden = true; }
   function ring(txt) { $('ringTxt').textContent = txt; $('ringBox').hidden = false; const go = () => { beep(880, .15); beep(1100, .15, .2); buzz([150, 80, 150]); }; go(); clearInterval(ringInt); clearTimeout(ringStop); ringInt = setInterval(go, 1200); ringStop = setTimeout(stopRing, 30000); }
   $('ringOff').addEventListener('click', stopRing);
 
-  /* stoper */
   const fmtSw = ms => { const t = Math.floor(ms / 10); return pad(Math.floor(t / 6000)) + ':' + pad(Math.floor(t / 100) % 60) + '.' + pad(t % 100); };
   let swRun = false, swBase = 0, swStartT = 0, swRaf = 0, laps = [];
   const swNow = () => swBase + (swRun ? performance.now() - swStartT : 0);
@@ -1367,7 +1567,6 @@ cDraw();
   $('swReset').addEventListener('click', () => { swBase = 0; swRun = false; laps = []; swDraw(); drawLaps(); swUi(); beep(480, .06); });
   swUi();
 
-  /* minutnik */
   let tMode = 'idle', tLeft = 0, tEnd = 0, tInt = 0;
   const fmtT = ms => { const s = Math.ceil(ms / 1000); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
   function tUi() { const idle = tMode === 'idle'; $('tSet').hidden = !idle; $('tDisp').hidden = idle; $('tStart').textContent = tMode === 'run' ? 'Pauza' : (tMode === 'pause' ? 'Wznów' : 'Start'); $('tReset').disabled = idle; }
@@ -1381,7 +1580,6 @@ cDraw();
   $('tReset').addEventListener('click', () => { clearInterval(tInt); tMode = 'idle'; tUi(); beep(480, .06); });
   tUi();
 
-  /* budzik */
   let alarms = []; try { alarms = JSON.parse(store.get('alarms', '[]')) || []; } catch (e) {}
   const saveAl = () => store.set('alarms', JSON.stringify(alarms));
   function drawAl() { $('aList').hidden = !alarms.length; $('aList').innerHTML = alarms.map((a, i) => `<div class='row static'><span class='atime'>${a.t}</span><span class='aact'><button class='aswitch' role='switch' aria-checked='${a.on}' data-i='${i}' aria-label='Włącz budzik ${a.t}'><span class='sw'></span></button><button class='adel' data-del='${i}' aria-label='Usuń budzik ${a.t}'>✕</button></span></div>`).join(''); }
@@ -1471,7 +1669,7 @@ $('shutdownBtn').addEventListener('click', shutdown);
 $('restartBtn').addEventListener('click', boot);
 $('resetBtn').addEventListener('click', () => {
   if (!confirm('Przywrócić ustawienia domyślne? Odcisk palca też zostanie usunięty.')) return;
-  ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall','cal','alarms','notesapp','drawing','sms','sms-num','active-chess-game'].forEach(store.del);
+  ['h24','sec','sound','vib','vol','bright','finger','lock','name','theme','wall','cal','alarms','notesapp','drawing','sms','sms-num'].forEach(store.del);
   location.reload();
 });
 
@@ -1483,207 +1681,302 @@ power.addEventListener('pointerdown', () => { if (power.dataset.state !== 'off')
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => power.addEventListener(ev, () => clearTimeout(holdTimer)));
 
 boot();
-
-/* ---------- SZACHY ONLINE SILNIK ---------- */
-const INITIAL_BOARD = [
-  ['r','n','b','q','k','b','n','r'],
-  ['p','p','p','p','p','p','p','p'],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['P','P','P','P','P','P','P','P'],
-  ['R','N','B','Q','K','B','N','R']
-];
-
-const PIECES_UNICODE = {
-  'k':'♚', 'q':'♛', 'r':'♜', 'b':'♝', 'n':'♞', 'p':'♟',
-  'K':'♔', 'Q':'♕', 'R':'♖', 'B':'♗', 'N':'♘', 'P':'♙'
-};
-
-let chessState = {
-  gameId: null,
-  myColor: null, // 'w' or 'b'
-  board: JSON.parse(JSON.stringify(INITIAL_BOARD)),
-  turn: 'w',
-  selRow: null,
-  selCol: null,
-  unsub: null
-};
-
-function isWhitePiece(p) { return p && p === p.toUpperCase(); }
-function isBlackPiece(p) { return p && p === p.toLowerCase(); }
-
-function initChessListeners() {
-  $('chessStartBtn').onclick = startChessChallenge;
-  $('chessResignBtn').onclick = resignChessGame;
-  
-  // Odzyskiwanie trwającej gry po odświeżeniu
-  const savedGame = store.get('active-chess-game', null);
-  if (savedGame) {
-    try {
-      const g = JSON.parse(savedGame);
-      joinChessGame(g.gameId, g.myColor);
-    } catch(e){}
-  }
-}
-
-async function startChessChallenge() {
-  const oppNum = smsNorm($('chessOpponentNum').value);
-  const myNum = smsNum();
-  if(!oppNum || oppNum === myNum) {
-    $('chessLobbyStatus').textContent = 'Wpisz poprawny numer przeciwnika!';
-    return;
-  }
-  
-  $('chessLobbyStatus').textContent = 'Wysyłanie wyzwania...';
-  const fb = await withTimeout(fbReady, 8000);
-  const gameId = 'chess_' + Date.now();
-  
-  await fb.createChessGame(gameId, myNum, oppNum, INITIAL_BOARD);
-  
-  // Wysyłamy wiadomość SMS z zaproszeniem do wyzwania
-  const msgId = fb.newId();
-  const inviteText = `Pojedynek w Szachy! <button onclick="acceptChessInvite('${gameId}')" class="cbtn main" style="padding:4px 8px; font-size:12px; margin-left:4px;">Graj</button>`;
-  await fb.send(msgId, myNum, oppNum, inviteText, Date.now());
-  
-  $('chessLobbyStatus').textContent = 'Wyzwanie wysłane! Czekam na przeciwnika...';
-  joinChessGame(gameId, 'w');
-}
-
-window.acceptChessInvite = function(gameId) {
-  setOpen('win-chess', true);
-  joinChessGame(gameId, 'b');
-};
-
-async function joinChessGame(gameId, color) {
-  chessState.gameId = gameId;
-  chessState.myColor = color;
-  store.set('active-chess-game', JSON.stringify({ gameId, myColor: color }));
-
-  $('chessLobby').style.display = 'none';
-  $('chessGame').style.display = 'flex';
-  
-  const boardEl = $('chessBoard');
-  boardEl.classList.toggle('flipped', color === 'b');
-  
-  const fb = await withTimeout(fbReady, 8000);
-  if(chessState.unsub) chessState.unsub();
-  
-  chessState.unsub = fb.listenChess(gameId, (data) => {
-    if(!data) {
-      alert('Partia została zakończona lub usunięta.');
-      exitChessGame();
-      return;
-    }
-    chessState.board = data.board;
-    chessState.turn = data.turn;
-    $('chessPlayerWhite').textContent = 'Białe: ' + (data.white || '-');
-    $('chessPlayerBlack').textContent = 'Czarne: ' + (data.black || '-');
-    $('chessStatus').textContent = (chessState.turn === 'w' ? 'Tura: Białe' : 'Tura: Czarne') + 
-      (chessState.turn === chessState.myColor ? ' (TWÓJ RUCH)' : '');
-    
-    renderBoard();
-  });
-}
-
-function renderBoard() {
-  const boardEl = $('chessBoard');
-  boardEl.innerHTML = '';
-  
-  for(let r=0; r<8; r++) {
-    for(let c=0; c<8; c++) {
-      const sq = document.createElement('div');
-      sq.className = 'sq ' + ((r+c)%2 === 0 ? 'w' : 'b');
-      if(chessState.selRow === r && chessState.selCol === c) sq.classList.add('sel');
-      
-      const p = chessState.board[r][c];
-      if(p) sq.textContent = PIECES_UNICODE[p] || p;
-      
-      sq.onclick = () => onSquareClick(r, c);
-      boardEl.appendChild(sq);
-    }
-  }
-}
-
-function onSquareClick(r, c) {
-  if(chessState.turn !== chessState.myColor) return;
-  const p = chessState.board[r][c];
-  
-  if(chessState.selRow === null) {
-    if(!p) return;
-    if(chessState.myColor === 'w' && !isWhitePiece(p)) return;
-    if(chessState.myColor === 'b' && !isBlackPiece(p)) return;
-    
-    chessState.selRow = r;
-    chessState.selCol = c;
-    renderBoard();
-  } else {
-    if(chessState.selRow === r && chessState.selCol === c) {
-      chessState.selRow = null;
-      chessState.selCol = null;
-      renderBoard();
-      return;
-    }
-    
-    // Ruch
-    makeMove(chessState.selRow, chessState.selCol, r, c);
-    chessState.selRow = null;
-    chessState.selCol = null;
-  }
-}
-
-async function makeMove(fromR, fromC, toR, toC) {
-  const piece = chessState.board[fromR][fromC];
-  const target = chessState.board[toR][toC];
-  
-  // Prosta walidacja: nie bijemy swoich
-  if(chessState.myColor === 'w' && isWhitePiece(target)) return;
-  if(chessState.myColor === 'b' && isBlackPiece(target)) return;
-
-  chessState.board[toR][toC] = piece;
-  chessState.board[fromR][fromC] = '';
-  
-  const nextTurn = chessState.turn === 'w' ? 'b' : 'w';
-  
-  // Jeśli zbity Król -> koniec gry
-  if(target === 'k' || target === 'K') {
-    alert((chessState.myColor === 'w' ? 'Białe' : 'Czarne') + ' wygrywają pojedynek!');
-    const fb = await withTimeout(fbReady, 8000);
-    await fb.deleteChessGame(chessState.gameId);
-    exitChessGame();
-    return;
-  }
-  
-  const fb = await withTimeout(fbReady, 8000);
-  await fb.updateChessGame(chessState.gameId, chessState.board, nextTurn);
-  beep(700, 0.05);
-}
-
-async function resignChessGame() {
-  if(!chessState.gameId) return;
-  if(confirm('Czy na pewno chcesz zakończyć partię?')) {
-    const fb = await withTimeout(fbReady, 8000);
-    await fb.deleteChessGame(chessState.gameId);
-    exitChessGame();
-  }
-}
-
-function exitChessGame() {
-  if(chessState.unsub) chessState.unsub();
-  chessState.gameId = null;
-  chessState.myColor = null;
-  store.del('active-chess-game');
-  $('chessGame').style.display = 'none';
-  $('chessLobby').style.display = 'block';
-  $('chessLobbyStatus').textContent = '';
-}
-
 </script>
+<script>
+/* ================= SZACHY ONLINE (gracz vs gracz, Firestore: kolekcja "szachy") ================= */
+(function () {
+  const FILES = 'abcdefgh', START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  const GL = { k: '♚\uFE0E', q: '♛\uFE0E', r: '♜\uFE0E', b: '♝\uFE0E', n: '♞\uFE0E', p: '♟\uFE0E' };
+  const isW = c => c !== '' && c === c.toUpperCase();
+  const rc = i => [i >> 3, i & 7];
+  const nm = i => FILES[i & 7] + (8 - (i >> 3));
+  const idxOf = s => (8 - Number(s[1])) * 8 + FILES.indexOf(s[0]);
+  const N_D = [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
+  const K_D = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  const R_D = [[1,0],[-1,0],[0,1],[0,-1]], B_D = [[1,1],[1,-1],[-1,1],[-1,-1]];
 
+  /* ---------- silnik ---------- */
+  function parse(f) {
+    const [p, t, c, e, h, n] = f.split(' '), b = [];
+    for (const row of p.split('/')) for (const ch of row) { if (/\d/.test(ch)) for (let i = 0; i < +ch; i++) b.push(''); else b.push(ch); }
+    return { b, turn: t, cas: c === '-' ? '' : c, ep: e === '-' ? -1 : idxOf(e), half: +h, full: +n };
+  }
+  function ser(s) {
+    const out = [];
+    for (let r = 0; r < 8; r++) {
+      let row = '', e = 0;
+      for (let c = 0; c < 8; c++) { const p = s.b[r * 8 + c]; if (!p) e++; else { if (e) { row += e; e = 0; } row += p; } }
+      if (e) row += e; out.push(row);
+    }
+    return out.join('/') + ' ' + s.turn + ' ' + (s.cas || '-') + ' ' + (s.ep < 0 ? '-' : nm(s.ep)) + ' ' + s.half + ' ' + s.full;
+  }
+  function attacked(b, i, by) {
+    const [r, c] = rc(i), w = by === 'w';
+    const at = (rr, cc) => rr >= 0 && rr < 8 && cc >= 0 && cc < 8 ? b[rr * 8 + cc] : null;
+    const pr = w ? r + 1 : r - 1, pc = w ? 'P' : 'p';
+    if (at(pr, c - 1) === pc || at(pr, c + 1) === pc) return true;
+    const N = w ? 'N' : 'n', K = w ? 'K' : 'k', Rk = w ? 'R' : 'r', Bs = w ? 'B' : 'b', Q = w ? 'Q' : 'q';
+    for (const [dr, dc] of N_D) if (at(r + dr, c + dc) === N) return true;
+    for (const [dr, dc] of K_D) if (at(r + dr, c + dc) === K) return true;
+    for (const [dr, dc] of [...R_D, ...B_D]) {
+      let rr = r + dr, cc = c + dc;
+      while (rr >= 0 && rr < 8 && cc >= 0 && cc < 8) {
+        const p = b[rr * 8 + cc];
+        if (p) { if (p === Q || (dr && dc ? p === Bs : p === Rk)) return true; break; }
+        rr += dr; cc += dc;
+      }
+    }
+    return false;
+  }
+  function pseudo(s) {
+    const { b, turn } = s, me = turn === 'w', out = [];
+    for (let i = 0; i < 64; i++) {
+      const p = b[i]; if (!p || isW(p) !== me) continue;
+      const t = p.toLowerCase(), [r, c] = rc(i);
+      if (t === 'p') {
+        const dir = me ? -1 : 1, start = me ? 6 : 1, last = me ? 0 : 7, r1 = r + dir;
+        const add = to => { if (rc(to)[0] === last) for (const pr of 'qrbn') out.push({ from: i, to, promo: pr }); else out.push({ from: i, to }); };
+        if (r1 < 0 || r1 > 7) continue;
+        if (!b[r1 * 8 + c]) { add(r1 * 8 + c); if (r === start && !b[(r + 2 * dir) * 8 + c]) out.push({ from: i, to: (r + 2 * dir) * 8 + c, dbl: true }); }
+        for (const dc of [-1, 1]) {
+          const cc = c + dc; if (cc < 0 || cc > 7) continue;
+          const to = r1 * 8 + cc, tp = b[to];
+          if (tp && isW(tp) !== me) add(to); else if (!tp && to === s.ep) out.push({ from: i, to, ep: true });
+        }
+      } else if (t === 'n' || t === 'k') {
+        for (const [dr, dc] of t === 'n' ? N_D : K_D) {
+          const rr = r + dr, cc = c + dc; if (rr < 0 || rr > 7 || cc < 0 || cc > 7) continue;
+          const tp = b[rr * 8 + cc]; if (!tp || isW(tp) !== me) out.push({ from: i, to: rr * 8 + cc });
+        }
+        if (t === 'k' && i === (me ? 60 : 4)) {
+          const en = me ? 'b' : 'w', rk = me ? 'R' : 'r', base = me ? 56 : 0, kK = me ? 'K' : 'k', kQ = me ? 'Q' : 'q';
+          if (s.cas.includes(kK) && !b[base + 5] && !b[base + 6] && b[base + 7] === rk && ![base + 4, base + 5, base + 6].some(x => attacked(b, x, en))) out.push({ from: i, to: base + 6, castle: 'k' });
+          if (s.cas.includes(kQ) && !b[base + 3] && !b[base + 2] && !b[base + 1] && b[base] === rk && ![base + 4, base + 3, base + 2].some(x => attacked(b, x, en))) out.push({ from: i, to: base + 2, castle: 'q' });
+        }
+      } else {
+        const ds = t === 'r' ? R_D : t === 'b' ? B_D : [...R_D, ...B_D];
+        for (const [dr, dc] of ds) {
+          let rr = r + dr, cc = c + dc;
+          while (rr >= 0 && rr < 8 && cc >= 0 && cc < 8) {
+            const tp = b[rr * 8 + cc];
+            if (!tp) out.push({ from: i, to: rr * 8 + cc });
+            else { if (isW(tp) !== me) out.push({ from: i, to: rr * 8 + cc }); break; }
+            rr += dr; cc += dc;
+          }
+        }
+      }
+    }
+    return out;
+  }
+  function apply(s, m) {
+    const b = s.b.slice(), p = b[m.from], me = isW(p), t = p.toLowerCase();
+    let cap = b[m.to];
+    b[m.to] = m.promo ? (me ? m.promo.toUpperCase() : m.promo) : p; b[m.from] = '';
+    if (m.ep) { b[m.to + (me ? 8 : -8)] = ''; cap = 'p'; }
+    if (m.castle) { const base = me ? 56 : 0; if (m.castle === 'k') { b[base + 5] = b[base + 7]; b[base + 7] = ''; } else { b[base + 3] = b[base]; b[base] = ''; } }
+    let cas = s.cas;
+    if (t === 'k') cas = cas.replace(me ? /[KQ]/g : /[kq]/g, '');
+    for (const [q, ch] of [[63, 'K'], [56, 'Q'], [7, 'k'], [0, 'q']]) if (m.from === q || m.to === q) cas = cas.replace(ch, '');
+    return { b, turn: me ? 'b' : 'w', cas, ep: m.dbl ? (m.from + m.to) / 2 : -1, half: (t === 'p' || cap) ? 0 : s.half + 1, full: s.full + (me ? 0 : 1) };
+  }
+  const kingOf = (b, w) => b.indexOf(w ? 'K' : 'k');
+  const inCheck = (s, turn) => attacked(s.b, kingOf(s.b, turn === 'w'), turn === 'w' ? 'b' : 'w');
+  const legal = s => pseudo(s).filter(m => { const n = apply(s, m); return !attacked(n.b, kingOf(n.b, s.turn === 'w'), s.turn === 'w' ? 'b' : 'w'); });
+  function insuff(b) {
+    const ps = b.filter(x => x && x.toLowerCase() !== 'k').map(x => x.toLowerCase());
+    return !ps.length || (ps.length === 1 && (ps[0] === 'b' || ps[0] === 'n'));
+  }
+  function outcome(s) {
+    if (!legal(s).length) return inCheck(s, s.turn) ? { winner: s.turn === 'w' ? 'b' : 'w', reason: 'mat' } : { winner: 'draw', reason: 'pat' };
+    if (s.half >= 100) return { winner: 'draw', reason: '50' };
+    if (insuff(s.b)) return { winner: 'draw', reason: 'material' };
+    return null;
+  }
+
+  /* ---------- stan i Firebase ---------- */
+  let fb = null, me = '', docsH = [], docsG = [], cur = null, over = null, sel = -1, targets = [], promoList = null;
+  const acked = new Set();
+  const roleOf = g => g.host === me ? 'w' : 'b';
+  const oppOf = g => g.host === me ? g.guest : g.host;
+  const name = n => { try { return cname(n); } catch (e) { return n; } };
+  const winOpen = () => $('win-chess').classList.contains('open');
+  const view = () => over ? over.snap : cur;
+  const show = (id, on) => { $(id).hidden = !on; };
+  const msg = t => { $('chMsg').textContent = t || ''; };
+
+  /* powiadomienie (baner na górze) */
+  const ban = document.createElement('div');
+  ban.hidden = true; ban.setAttribute('role', 'alert');
+  ban.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;width:min(92vw,360px);box-sizing:border-box;background:#1f2430;color:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,.4);cursor:pointer;font:inherit;display:flex;align-items:center;gap:10px;';
+  const banT = document.createElement('div'); banT.style.cssText = 'flex:1;min-width:0;font-size:14px;';
+  ban.append('♟️', banT); document.body.appendChild(ban);
+  let banTimer = 0;
+  ban.addEventListener('click', () => { ban.hidden = true; beep(520, .06); setOpen('win-chess', true); render(); });
+  function notify(text) {
+    if ($('power').dataset.state === 'off' || winOpen()) return;
+    banT.textContent = text; ban.hidden = false;
+    clearTimeout(banTimer); banTimer = setTimeout(() => { ban.hidden = true; }, 6000);
+    beep(880, .1); beep(1100, .1, .12); buzz([60, 40, 60]);
+  }
+
+  /* kropka na ikonie */
+  const appBtn = document.querySelector('[data-open="win-chess"]');
+  const dot = document.createElement('i'); dot.className = 'chdot'; dot.hidden = true; appBtn.appendChild(dot);
+  function updateDot() {
+    const g = cur;
+    dot.hidden = winOpen() || !g || !((g.status === 'invite' && g.guest === me) || (g.status === 'active' && g.turn === roleOf(g)));
+  }
+  new MutationObserver(updateDot).observe($('win-chess'), { attributes: true, attributeFilter: ['class'] });
+
+  function sync() {
+    const all = [...docsH, ...docsG].filter(g => !(g.status === 'finished' && ((g.ack || {})[roleOf(g)] || acked.has(g.id))));
+    all.sort((a, b) => (a.t || 0) - (b.t || 0));
+    const old = cur;
+    cur = all.find(g => g.status === 'active') || all.find(g => g.status === 'finished') ||
+          all.find(g => g.status === 'invite' && g.host === me) || all.find(g => g.status === 'invite') || null;
+
+    if (cur && cur.status === 'finished' && !over) {
+      over = { snap: cur, result: cur.result || { winner: 'draw', reason: '' } };
+      acked.add(cur.id);
+      fb.chess.ack(cur.id, roleOf(cur)).catch(e => console.error('Szachy ack:', e));
+      beep(523, .12); beep(784, .16, .12);
+    }
+    if (cur && old && cur.id === old.id) {
+      if (cur.fen !== old.fen) { sel = -1; targets = []; if (cur.turn === roleOf(cur) && cur.status === 'active') { beep(600, .08); notify('Twój ruch w szachach (' + name(oppOf(cur)) + ')'); } }
+      if (old.status === 'invite' && cur.status === 'active' && cur.host === me) notify(name(cur.guest) + ' zaakceptował(a) partię w szachy');
+    } else if (cur && cur.status === 'invite' && cur.guest === me) {
+      notify(name(cur.host) + ' zaprasza Cię do szachów');
+    }
+    if (!cur || (old && cur.id !== old.id)) { sel = -1; targets = []; }
+    render(); updateDot();
+  }
+
+  /* ---------- widok ---------- */
+  function render() {
+    $('chInfo').textContent = me ? 'Twój numer: ' + me + ' · gospodarz gra białymi' : 'Łączenie z siecią…';
+    const g = view();
+    show('chLobby', !g);
+    show('chWait', !over && !!cur && cur.status === 'invite' && cur.host === me);
+    show('chInv', !over && !!cur && cur.status === 'invite' && cur.guest === me);
+    show('chGame', !!g && (over || g.status !== 'invite'));
+    if (!g) return;
+    if (!over && cur.status === 'invite') {
+      if (cur.host === me) $('chWaitTxt').textContent = 'Wysłano zaproszenie do ' + name(cur.guest) + '. Czekam na akceptację…';
+      else $('chInvTxt').textContent = name(cur.host) + ' zaprasza Cię do partii szachów. Gospodarz gra białymi.';
+      return;
+    }
+    const role = roleOf(g), opp = oppOf(g), s = parse(g.fen);
+    const lab = (n, r, on) => '<span>' + (r === 'w' ? '⚪ ' : '⚫ ') + n + ' <small>' + (r === 'w' ? 'białe' : 'czarne') + '</small></span><span>' + (on ? '●' : '') + '</span>';
+    const act = !over && g.status === 'active';
+    $('chTop').innerHTML = lab(name(opp), role === 'w' ? 'b' : 'w', act && g.turn !== role);
+    $('chBot').innerHTML = lab('Ty', role, act && g.turn === role);
+    $('chTop').classList.toggle('turn', act && g.turn !== role);
+    $('chBot').classList.toggle('turn', act && g.turn === role);
+    $('chStat').textContent = over ? 'Partia zakończona.' : (g.turn === role ? 'Twój ruch' : 'Ruch przeciwnika') + (inCheck(s, s.turn) ? ' · Szach!' : '');
+    $('chRes').hidden = !!over;
+    drawBoard(s, g, role);
+    const o = $('chOver');
+    if (over) {
+      const w = over.result.winner, why = over.result.reason;
+      $('chOverT').textContent = w === 'draw' ? '🤝 Remis' : w === role ? '🏆 Wygrałeś!' : '😔 Przegrałeś';
+      $('chOverD').textContent = ({ mat: 'Szach-mat.', pat: 'Pat.', '50': 'Zasada 50 ruchów.', material: 'Za mało figur do mata.', resign: w === role ? 'Przeciwnik się poddał.' : 'Poddałeś partię.' }[why] || '') + ' Partia została usunięta z serwera.';
+      o.hidden = false;
+    } else o.hidden = true;
+  }
+  function drawBoard(s, g, role) {
+    s = s || parse(view().fen); g = g || view(); role = role || roleOf(g);
+    const flip = role === 'b', chkSq = inCheck(s, s.turn) ? kingOf(s.b, s.turn === 'w') : -1;
+    const tmap = new Map(targets.map(m => [m.to, m]));
+    const frag = document.createDocumentFragment();
+    for (let vr = 0; vr < 8; vr++) for (let vc = 0; vc < 8; vc++) {
+      const i = flip ? (7 - vr) * 8 + (7 - vc) : vr * 8 + vc, [r, c] = rc(i), p = s.b[i];
+      const b = document.createElement('button');
+      b.className = 'chsq ' + ((r + c) % 2 ? 'd' : 'l'); b.dataset.i = i;
+      b.setAttribute('aria-label', nm(i) + (p ? ' ' + p : ''));
+      if (g.last && (g.last[0] === i || g.last[1] === i)) b.classList.add('lm');
+      if (i === sel) b.classList.add('sel');
+      if (i === chkSq) b.classList.add('chk');
+      if (tmap.has(i)) { b.classList.add('tg'); if (p || tmap.get(i).ep) b.classList.add('cap'); }
+      if (p) { const sp = document.createElement('span'); sp.className = 'chp ' + (isW(p) ? 'pw' : 'pb'); sp.textContent = GL[p.toLowerCase()]; b.appendChild(sp); }
+      frag.appendChild(b);
+    }
+    $('chBoard').replaceChildren(frag);
+  }
+
+  /* ---------- akcje ---------- */
+  function doMove(m) {
+    const g = cur; if (!g) return;
+    const n = apply(parse(g.fen), m), out = outcome(n);
+    sel = -1; targets = [];
+    fb.chess.save(g.id, { fen: ser(n), turn: n.turn, last: [m.from, m.to], t: Date.now(), status: out ? 'finished' : 'active', result: out || null })
+      .catch(e => { console.error('Szachy zapis:', e); $('chStat').textContent = 'Nie udało się zapisać ruchu. Sprawdź internet.'; });
+  }
+  $('chBoard').addEventListener('click', e => {
+    const bt = e.target.closest('.chsq'); if (!bt || over || !cur || cur.status !== 'active') return;
+    if (cur.turn !== roleOf(cur)) return;
+    const i = Number(bt.dataset.i), s = parse(cur.fen);
+    if (sel >= 0) {
+      const ms = targets.filter(m => m.to === i);
+      if (ms.length) {
+        if (ms[0].promo) { promoList = ms; const w = s.turn === 'w';
+          $('chPromoBtns').innerHTML = ms.map(m => '<button data-p="' + m.promo + '" style="color:' + (w ? '#fff' : '#111') + '">' + GL[m.promo] + '</button>').join('');
+          $('chPromo').hidden = false; return; }
+        return doMove(ms[0]);
+      }
+    }
+    const p = s.b[i];
+    if (p && isW(p) === (s.turn === 'w')) { sel = i; targets = legal(s).filter(m => m.from === i); } else { sel = -1; targets = []; }
+    drawBoard();
+  });
+  $('chPromoBtns').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !promoList) return;
+    const m = promoList.find(x => x.promo === b.dataset.p); promoList = null; $('chPromo').hidden = true; if (m) doMove(m);
+  });
+
+  async function startGame() {
+    msg('');
+    if (!fb || !me) return msg('Brak połączenia z serwerem. Spróbuj za chwilę.');
+    if (cur || over) return;
+    const n = smsNorm($('chTo').value);
+    if (!/^600-\d{3}$/.test(n)) return msg('Wpisz poprawny numer, np. 600-123.');
+    if (n === me) return msg('Nie możesz grać sam ze sobą.');
+    $('chGo').disabled = true;
+    try {
+      if (!(await withTimeout(fb.chess.exists(n.slice(4)), 8000))) { msg('Nie ma telefonu o numerze ' + n + '.'); return; }
+      await withTimeout(fb.chess.save(fb.chess.newId(), { host: me, guest: n, status: 'invite', fen: START, turn: 'w', last: null, result: null, ack: {}, t: Date.now() }), 10000);
+      $('chTo').value = ''; beep(660, .08);
+    } catch (e) { msg('Nie udało się wysłać zaproszenia. Sprawdź internet.'); }
+    finally { $('chGo').disabled = false; }
+  }
+  $('chGo').addEventListener('click', startGame);
+  $('chTo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); startGame(); } });
+  $('chCancel').addEventListener('click', () => { if (cur) fb.chess.del(cur.id).catch(() => {}); });
+  $('chDec').addEventListener('click', () => { if (cur) fb.chess.del(cur.id).catch(() => {}); });
+  $('chAcc').addEventListener('click', () => { if (cur) { beep(660, .08); fb.chess.save(cur.id, { status: 'active', t: Date.now() }).catch(() => {}); } });
+  $('chRes').addEventListener('click', () => {
+    if (!cur || cur.status !== 'active' || !confirm('Na pewno chcesz się poddać?')) return;
+    fb.chess.save(cur.id, { status: 'finished', result: { winner: roleOf(cur) === 'w' ? 'b' : 'w', reason: 'resign' }, t: Date.now() }).catch(() => {});
+  });
+  $('chOk').addEventListener('click', () => { over = null; sel = -1; targets = []; sync(); });
+  appBtn.addEventListener('click', () => { render(); updateDot(); });
+
+  /* ---------- start po połączeniu z Firebase i nadaniu numeru ---------- */
+  fbReady.then(f => {
+    fb = f;
+    const t = setInterval(() => {
+      const n = store.get('phone-num', '');
+      if (!n || !fb.chess) return;
+      clearInterval(t); me = n;
+      fb.chess.listen('host', me, l => { docsH = l; sync(); });
+      fb.chess.listen('guest', me, l => { docsG = l; sync(); });
+      render();
+    }, 400);
+  }).catch(() => {});
+})();
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
-  import { getFirestore, collection, doc, runTransaction, setDoc, updateDoc, deleteDoc, query, where, onSnapshot }
+  import { getFirestore, collection, doc, runTransaction, setDoc, getDoc, deleteDoc, query, where, onSnapshot }
     from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 
   const app = initializeApp({
@@ -1746,7 +2039,26 @@ function exitChessGame() {
     return num;
   }
 
+  const chess = {
+    newId: () => doc(collection(db, 'szachy')).id,
+    exists: async (suffix) => (await getDoc(doc(db, 'urzadzenia', suffix))).exists(),
+    save: (id, data) => setDoc(doc(db, 'szachy', id), data, { merge: true }),
+    del: (id) => deleteDoc(doc(db, 'szachy', id)),
+    listen: (field, me, cb) => onSnapshot(
+      query(collection(db, 'szachy'), where(field, '==', me)),
+      (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.error('Szachy listener:', err)
+    ),
+    ack: (id, role) => runTransaction(db, async (t) => {
+      const ref = doc(db, 'szachy', id), snap = await t.get(ref);
+      if (!snap.exists()) return;
+      const a = { ...(snap.data().ack || {}), [role]: true };
+      if (a.w && a.b) t.delete(ref); else t.update(ref, { ack: a });
+    })
+  };
+
   window.__fbResolve({
+    chess,
     claimNumber,
     newId: () => doc(collection(db, 'sms')).id,
     reportIp,
@@ -1757,26 +2069,7 @@ function exitChessGame() {
         if (ch.type === 'added') { const d = ch.doc.data(); cb(ch.doc.id, d.from, d.x, d.t); }
       }),
       (err) => console.error('Odbiór wiadomości:', err)
-    ),
-    
-    // FIRABASE DLA SZACHÓW ONLINE
-    createChessGame: (gameId, white, black, board) => setDoc(doc(db, 'chess', gameId), {
-      white, black, board: JSON.stringify(board), turn: 'w', t: Date.now()
-    }),
-    updateChessGame: (gameId, board, turn) => updateDoc(doc(db, 'chess', gameId), {
-      board: JSON.stringify(board), turn, t: Date.now()
-    }),
-    deleteChessGame: (gameId) => deleteDoc(doc(db, 'chess', gameId)),
-    listenChess: (gameId, cb) => onSnapshot(doc(db, 'chess', gameId), (snap) => {
-      if (!snap.exists()) { cb(null); return; }
-      const data = snap.data();
-      cb({
-        white: data.white,
-        black: data.black,
-        board: JSON.parse(data.board),
-        turn: data.turn
-      });
-    })
+    )
   });
 </script>
 </body>
