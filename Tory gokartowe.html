@@ -246,16 +246,21 @@ footer{padding:20px 0 36px;color:var(--muted);font-size:.9rem}
 'use strict';
 
 // ----------------------------------------------------
-// KONFIGURACJA FIREBASE (Wklej tutaj dane ze swojego projektu)
+// KONFIGURACJA FIREBASE
 // ----------------------------------------------------
 var firebaseConfig = {
-  apiKey: "TUTAJ_API_KEY",
-  authDomain: "TUTAJ_PROJECT_ID.firebaseapp.com",
-  projectId: "TUTAJ_PROJECT_ID",
-  storageBucket: "TUTAJ_PROJECT_ID.appspot.com",
-  messagingSenderId: "TUTAJ_MESSAGING_SENDER_ID",
-  appId: "TUTAJ_APP_ID"
+  apiKey: "AIzaSyCQ6KflY_eayVYvAvYIszxrBYKCigbL6bM",
+  authDomain: "tory-gokartowe.firebaseapp.com",
+  projectId: "tory-gokartowe",
+  storageBucket: "tory-gokartowe.firebasestorage.app",
+  messagingSenderId: "324943568721",
+  appId: "1:324943568721:web:994d32bb030e938ede3d70",
+  measurementId: "G-BYVXGKZ6T9"
 };
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
 
 firebase.initializeApp(firebaseConfig);
 var auth = firebase.auth();
