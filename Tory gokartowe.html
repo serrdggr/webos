@@ -1,0 +1,951 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tory gokartowe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+/* Układ: pasy krawężnika u góry i na dole, lista torów jako karty, strona toru z rankingiem 20 najlepszych i historią przejazdów. */
+:root{
+  --bg:#e7e6e1; --surface:#f6f5f1; --ink:#23262b; --muted:#5d626a;
+  --red:#d3302a; --on-red:#fff; --line:#c9c8c1; --err:#b3241f; --stripe:#fff;
+  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#25272b;--surface:#2f3237;--ink:#eeede8;--muted:#a7abb2;--red:#ef5a52;--on-red:#1d1d1d;--line:#454850;--err:#ff8f88;--stripe:#eeede8;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#25272b;--surface:#2f3237;--ink:#eeede8;--muted:#a7abb2;--red:#ef5a52;--on-red:#1d1d1d;--line:#454850;--err:#ff8f88;--stripe:#eeede8;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 1rem/1.55 var(--font)}
+.kerb{height:14px;background:repeating-linear-gradient(90deg,var(--red) 0 28px,var(--stripe) 28px 56px)}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+header{padding:44px 0 28px}
+h1{font-weight:900;font-size:clamp(2.6rem,9vw,5.6rem);line-height:.95;letter-spacing:-.03em;margin:0 0 14px;text-wrap:balance;overflow-wrap:anywhere}
+header p{margin:0 0 18px;max-width:46ch;color:var(--muted);font-size:1.1rem}
+h2{font-weight:800;font-size:1.5rem;margin:0 0 4px;text-wrap:balance;overflow-wrap:anywhere}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));padding:12px 0 56px}
+.card{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:2px solid var(--ink);border-radius:4px;padding:22px;text-decoration:none;color:inherit;min-height:210px;min-width:0}
+.card:hover,.card:focus-visible{background:var(--red);color:var(--on-red);border-color:var(--red)}
+.card:hover .addr,.card:focus-visible .addr,.card:hover .rec,.card:focus-visible .rec{color:inherit}
+.card .no{font-weight:900;font-size:3.2rem;line-height:1}
+.addr{color:var(--muted);font-style:normal}
+.rec{color:var(--muted);font-variant-numeric:tabular-nums}
+.pod{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.pod li{display:grid;grid-template-columns:1.4em minmax(0,1fr) auto;gap:8px;align-items:baseline}
+.pod .pl{font-weight:900}
+.pod .pn{overflow-wrap:anywhere;min-width:0}
+.pod .pt{font-weight:800}
+.go{margin-top:auto;font-weight:800}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.back{display:inline-block;margin:28px 0 8px;color:var(--ink);font-weight:800}
+.detail{padding-bottom:64px}
+.detail h1{font-size:clamp(2.2rem,7vw,4.2rem)}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:16px 28px;background:var(--surface);border:2px solid var(--ink);border-radius:4px;padding:22px;margin:22px 0;max-width:760px}
+.info>div{min-width:0}
+.info dt{font-weight:800;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.07em}
+.info dd{margin:2px 0 0;font-size:1.1rem;overflow-wrap:anywhere}
+.info dd a{color:var(--ink);font-weight:800}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-block;background:var(--red);color:var(--on-red);font-weight:800;padding:14px 22px;border-radius:4px;text-decoration:none;border:0;font:inherit;font-weight:800;cursor:pointer}
+.btn:hover{filter:brightness(.92)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.ghost{background:none;color:var(--ink);border:2px solid var(--ink)}
+.sec{margin-top:44px}
+.sec h2{font-size:1.8rem;margin-bottom:12px}
+.sh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sh h2{margin:0}
+.sum{color:var(--muted);margin:0 0 6px;font-variant-numeric:tabular-nums}
+.rival{margin:0 0 14px;font-weight:800;font-variant-numeric:tabular-nums}
+.msg{color:var(--muted);max-width:56ch;margin:0}
+.tbl{width:100%;max-width:820px;border-collapse:collapse;background:var(--surface);border:2px solid var(--ink);font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th{font-size:.9rem;color:var(--muted)}
+.tbl td.num,.tbl th.num{text-align:right}
+.tbl td.p1{background:var(--red);color:var(--on-red);font-weight:900}
+.tbl td.p2,.tbl td.p3{font-weight:900}
+.tbl tr.top td{font-weight:800}
+.tbl tr.mine td{border-top:2px solid var(--ink)}
+.tbl tr.on td{background:var(--red);color:var(--on-red)}
+.tbl tr.on .link{color:var(--on-red)}
+.tbl tr.on .tag{color:inherit}
+.tbl tr.dots td{text-align:center;color:var(--muted);letter-spacing:.3em}
+.tag{color:var(--muted);font-size:.85rem;font-weight:800;margin-left:6px}
+.link{all:unset;cursor:pointer;font-weight:800;text-decoration:underline;text-underline-offset:3px;color:var(--ink)}
+.link:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.seg{display:inline-flex;max-width:100%;border:2px solid var(--ink);border-radius:4px;margin:0 0 14px}
+.seg button{font:inherit;font-weight:800;padding:8px 16px;background:none;color:var(--ink);border:0;cursor:pointer}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px 18px;margin:0 0 22px;max-width:820px}
+.stats div{min-width:0}
+.stats dt{font-weight:800;color:var(--muted);font-size:.85rem}
+.stats dd{margin:0;font-weight:900;font-size:1.35rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stats dd small{font-weight:800;font-size:.85rem;color:var(--muted);margin-left:6px}
+.chartbox{background:var(--surface);border:2px solid var(--ink);border-radius:4px;padding:14px;max-width:820px;margin:0 0 22px}
+.chartbox h3{font-size:1rem;font-weight:800;margin:0 0 8px}
+.chartbox .hint{margin:8px 0 0}
+.chartwrap{position:relative}
+.chartwrap svg{display:block;width:100%;height:auto}
+.chartwrap svg:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ch-grid{stroke:var(--line);stroke-width:1}
+.ch-rec{stroke:var(--ink);stroke-width:1.5;opacity:.7}
+.ch-line{fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ch-dot{fill:var(--red);stroke:var(--surface);stroke-width:2}
+.ch-cross{stroke:var(--muted);stroke-width:1}
+.ch-txt{fill:var(--muted);font:500 12px var(--font)}
+.ch-hit{fill:transparent;touch-action:pan-y;cursor:crosshair}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:4px;font-size:.85rem;white-space:nowrap;transform:translate(-50%,-100%);z-index:2}
+.tip strong{display:block;font-size:1rem;font-variant-numeric:tabular-nums}
+.tip i{display:inline-block;width:14px;height:2px;background:var(--red);vertical-align:middle;margin-right:6px}
+.cmpsel{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px;max-width:560px;margin:0 0 14px}
+select{font:inherit;font-weight:500;padding:10px 12px;border:2px solid var(--ink);border-radius:4px;background:var(--bg);color:var(--ink);min-width:0;width:100%}
+select:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.tbl td.win{font-weight:900}
+.tbl td.win .tag{color:var(--red)}
+.strip{margin:0;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.you{font-weight:800}
+.ok{color:var(--muted);margin:0}
+.ok:empty,.err:empty{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.fchip{font:inherit;font-weight:800;padding:6px 14px;border:2px solid var(--ink);border-radius:999px;background:none;color:var(--ink);cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tiles{list-style:none;margin:0 0 20px;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:820px}
+.tile{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:2px solid var(--ink);border-radius:4px;padding:14px 16px;min-width:0}
+.tile .tp{font-weight:900;font-size:2.4rem;line-height:1}
+.tile .tn{font-weight:800;overflow-wrap:anywhere}
+.tile .tt{font-weight:900;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.tile .td{color:var(--muted);font-size:.85rem}
+@media (max-width:520px){.tile{padding:10px 10px}.tile .tp{font-size:1.8rem}.tile .tt{font-size:1.1rem}.tile .tn{font-size:.9rem}.tile .td{font-size:.75rem}}
+.tile.t1{background:var(--red);color:var(--on-red);border-color:var(--red)}
+.tile.t1 .td{color:inherit;opacity:.85}
+fieldset.kset{border:0;padding:0;margin:0;min-width:0}
+.kset legend{font-weight:800;font-size:.9rem;padding:0;margin-bottom:6px}
+.kcs{display:flex;flex-wrap:wrap;gap:8px}
+.kc{position:relative;display:inline-block}
+.kc input{position:absolute;opacity:0;width:1px;height:1px;padding:0;border:0}
+.kc label{display:block;font-size:1rem;font-weight:800;padding:10px 16px;border:2px solid var(--ink);border-radius:999px;cursor:pointer;min-width:3.4rem;text-align:center}
+.kc input:checked+label{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.kc input:focus-visible+label{outline:3px solid var(--ink);outline-offset:3px}
+.scroll{overflow-x:auto;max-width:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bar{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 0 0}
+.brand{font-weight:900;font-size:1.4rem;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.who{display:flex;align-items:center;gap:8px;font-weight:800;margin-left:auto;min-width:0}
+.who span{overflow-wrap:anywhere}
+.avatar{width:28px;height:28px;border-radius:50%;flex:none}
+.status{margin:14px 0 0;color:var(--muted);max-width:70ch}
+.status.err,.err{color:var(--err);font-weight:800}
+.err{margin:0}
+dialog{border:2px solid var(--ink);border-radius:4px;background:var(--surface);color:var(--ink);padding:22px;width:min(460px,92vw);max-height:92vh;overflow-y:auto}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog h2{font-size:1.4rem;margin:0 0 14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;font-weight:800;font-size:.9rem;gap:4px}
+input{font:inherit;font-weight:500;padding:10px 12px;border:2px solid var(--ink);border-radius:4px;background:var(--bg);color:var(--ink);min-width:0;width:100%}
+.hint{font-weight:500;color:var(--muted);font-size:.85rem;margin:0}
+.dlgbtns{display:flex;gap:10px;flex-wrap:wrap}
+[hidden]{display:none!important}
+footer{padding:20px 0 36px;color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,color .15s}}
+</style>
+
+<div class="kerb" aria-hidden="true"></div>
+<main class="wrap">
+  <div class="bar">
+    <a class="brand" href="#">Gokarty</a>
+    <div class="who" id="who" hidden></div>
+  </div>
+  <p class="status" id="status" role="status" hidden></p>
+
+  <section id="home" hidden>
+    <header>
+      <h1>Wybierz tor</h1>
+      <p>Lista torów gokartowych. Kliknij tor, żeby zobaczyć adres, ranking i swoje czasy.</p>
+      <div class="strip" id="strip" hidden></div>
+    </header>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <section id="track" class="detail" hidden>
+    <a class="back" href="#">Wszystkie tory</a>
+    <h1 id="tName"></h1>
+    <dl class="info" id="tInfo"></dl>
+    <div class="actions">
+      <a class="btn" id="mapLink" target="_blank" rel="noopener">Otwórz w Mapach</a>
+    </div>
+
+    <section class="sec" aria-labelledby="rankH">
+      <div class="sh"><h2 id="rankH">Ranking toru</h2><button type="button" class="btn" id="addBtn" disabled>Dodaj przejazd</button></div>
+      <div class="seg" role="group" aria-label="Zakres rankingu">
+        <button type="button" id="perAll" aria-pressed="true">Cały czas</button>
+        <button type="button" id="perMonth" aria-pressed="false">Ten miesiąc</button>
+      </div>
+      <div class="chips" id="kartFilter" role="group" aria-label="Filtr gokarta" hidden></div>
+      <p class="sum" id="summary"></p>
+      <p class="rival" id="rival"></p>
+      <div id="tiles"></div>
+      <div id="rank"></div>
+    </section>
+
+    <section class="sec" id="cmpSec" aria-labelledby="cmpH" hidden>
+      <h2 id="cmpH">Porównanie kierowców</h2>
+      <div class="cmpsel">
+        <label for="cmpA">Kierowca A<select id="cmpA"></select></label>
+        <label for="cmpB">Kierowca B<select id="cmpB"></select></label>
+      </div>
+      <p class="rival" id="cmpSum"></p>
+      <div id="cmpOut"></div>
+    </section>
+
+    <section class="sec" id="histSec" aria-labelledby="hTitle" hidden>
+      <h2 id="hTitle"></h2>
+      <div id="stats"></div>
+      <div id="chart"></div>
+      <div id="hist"></div>
+    </section>
+  </section>
+</main>
+
+<dialog id="dlgRide" aria-labelledby="dlgRideH">
+  <form id="rideForm" class="stack" novalidate>
+    <h2 id="dlgRideH">Dodaj przejazd</h2>
+    <fieldset class="kset" id="rKartSet" hidden>
+      <legend>Gokart</legend>
+      <div class="kcs" id="rChips"></div>
+    </fieldset>
+    <label for="rKart" id="rKartL">Gokart
+      <input id="rKart" type="text" maxlength="40" list="kartList" autocomplete="off" placeholder="model lub numer gokarta">
+      <datalist id="kartList"></datalist>
+    </label>
+    <label for="rTime">Czas okrążenia
+      <input id="rTime" type="text" inputmode="decimal" autocomplete="off" placeholder="np. 1:02.345, 58.4 albo 1.02.345">
+      <span class="hint">Możesz pisać bez dwukropka: 1.02.345 to 1:02.345. Zakres od 0:15 do 10:00.</span>
+    </label>
+    <label for="rDate">Data
+      <input id="rDate" type="date">
+    </label>
+    <p class="ok" id="rOk" role="status"></p>
+    <p class="err" id="rErr" role="alert"></p>
+    <div class="dlgbtns">
+      <button type="submit" class="btn" id="rSave">Zapisz</button>
+      <button type="submit" class="btn ghost" id="rSaveMore">Zapisz i dodaj kolejny</button>
+      <button type="button" class="btn ghost" id="rCancel">Zamknij</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="kerb" aria-hidden="true"></div>
+<div class="wrap"><footer>Tory gokartowe</footer></div>
+
+<script>
+(function(){
+'use strict';
+
+var TRACKS=[{
+  id:'tor-1',
+  name:'Tor Gokartowy / Kartingowy',
+  street:'al. Wojska Polskiego 237A',
+  city:'71-256 Szczecin',
+  hours:'Zima (1.10–30.04): codziennie 12:00–20:00',
+  phone:'601 972 076',
+  src:{label:'gokart.pl',url:'https://www.gokart.pl/kontakt.html'},
+  karts:['2os','J','RX','13K','9K']
+},{
+  id:'tor-2',
+  name:'Silver Hotel & Gokart Center',
+  street:'Rondo Hermana Hakena',
+  city:'70-001 Szczecin',
+  phone:'91 44 12 500',
+  len:'Ponad 0,5 km, tor całoroczny',
+  q:'Silver Hotel & Gokart Center, Szczecin',
+  src:{label:'KOGIS',url:'https://www.kogis.pl/atrakcje/gokart-center-szczecin-caloroczny-tor-kartingowy/'}
+}];
+var TOP=20, MIN_MS=15000, MAX_MS=600000, MAX_RIDES=1500;
+
+var $=function(i){return document.getElementById(i)};
+var st={
+  db:null,user:null,ready:false,loaded:false,slow:false,fail:false,
+  uid:null,myName:'',avatar:'',isOwner:false,
+  players:[],names:{},track:'',sel:null,del:null,busy:false,
+  note:'',noteErr:false,period:'all',kart:'',cmpA:null,cmpB:null
+};
+
+/* ---------- pomocnicze ---------- */
+function el(tag,text,cls){var e=document.createElement(tag);if(text!=null&&text!=='')e.textContent=text;if(cls)e.className=cls;return e}
+function clear(n){n.textContent=''}
+function trackById(id){return TRACKS.filter(function(t){return t.id===id})[0]||null}
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function todayISO(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+function fmtDate(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?m[3]+'.'+m[2]+'.'+m[1]:(s||'-')}
+function mapUrl(t){
+  var q=t.q||[t.street,t.city].filter(Boolean).join(', ');
+  return q?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q):'';
+}
+function fmt(ms){
+  var m=Math.floor(ms/60000), s=(ms%60000)/1000;
+  var ss=(m>0&&s<10?'0':'')+s.toFixed(3);
+  return m>0?m+':'+ss:ss;
+}
+function fmtGap(ms){return ms===0?'':'+'+(ms/1000).toFixed(3)}
+function parseTime(t){
+  var x=String(t).trim().replace(/,/g,'.');
+  var m=x.match(/^(\d{1,2})\.(\d{2})\.(\d{1,3})$/);
+  if(m){
+    if(+m[2]>59)return null;
+    return (Number(m[1])*60+Number(m[2]))*1000+Number((m[3]+'00').slice(0,3));
+  }
+  m=x.match(/^(?:(\d{1,2}):)?(\d{1,2})(?:\.(\d{1,3}))?$/);
+  if(!m)return null;
+  var sec=+m[2];
+  if(m[1]&&sec>59)return null;
+  var frac=m[3]?+(m[3]+'00').slice(0,3):0;
+  return ((m[1]?+m[1]:0)*60+sec)*1000+frac;
+}
+var MONTHS=['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+function monthLabel(){var d=todayISO();return MONTHS[+d.slice(5,7)-1]+' '+d.slice(0,4)}
+function inPeriod(r,per){return per!=='month'||String(r.date||'').slice(0,7)===todayISO().slice(0,7)}
+function ridesOf(p,t){
+  return (p.rides||[]).filter(function(r){return r&&r.track===t&&typeof r.ms==='number'&&isFinite(r.ms)});
+}
+function playerById(id){return st.players.filter(function(p){return p.id===id})[0]||null}
+function nameOf(id){
+  if(id===st.uid&&st.myName)return st.myName;
+  return st.names[id]||'Kierowca';
+}
+/* najlepszy czas każdego kierowcy na torze, od najszybszego */
+function board(t,per,kart){
+  var out=[];
+  st.players.forEach(function(p){
+    var rs=ridesOf(p,t).filter(function(r){return inPeriod(r,per)&&(!kart||r.kart===kart)});
+    if(!rs.length)return;
+    var best=rs.reduce(function(a,b){return (b.ms<a.ms||(b.ms===a.ms&&b.date<a.date))?b:a});
+    out.push({id:p.id,best:best,count:rs.length});
+  });
+  out.sort(function(a,b){return a.best.ms-b.best.ms||(a.best.date<b.best.date?-1:a.best.date>b.best.date?1:0)});
+  return out;
+}
+function setNote(msg,isErr){st.note=msg||'';st.noteErr=!!isErr;renderStatus()}
+function flash(msg){
+  setNote(msg,false);
+  setTimeout(function(){if(st.note===msg&&!st.noteErr)setNote('')},4000);
+}
+function errText(e){
+  if(e&&e.code==='invalid_argument')return 'Nie masz uprawnień do zapisu. Poproś właściciela strony o odpowiednią rolę.';
+  if(e&&e.code==='quota_exceeded')return 'Baza jest pełna. Usuń część danych i spróbuj ponownie.';
+  if(e&&e.code==='unavailable')return 'Baza jest chwilowo niedostępna. Spróbuj za chwilę.';
+  return (e&&e.message)?e.message:'Nie udało się zapisać. Spróbuj ponownie.';
+}
+
+/* ---------- widoki ---------- */
+function renderBar(){
+  var w=$('who');clear(w);
+  if(!st.uid){w.hidden=true;return}
+  w.hidden=false;
+  var img=document.createElement('img');img.className='avatar';img.alt='';img.src=st.avatar;
+  w.appendChild(img);
+  w.appendChild(el('span',st.myName||'Kierowca'));
+}
+
+function statusText(){
+  if(!st.ready)return {t:'Wczytuję…',e:false};
+  if(!st.db)return {t:'Dane są niedostępne. Otwórz stronę po zalogowaniu w claude.ai i odśwież ją.',e:true};
+  if(st.fail)return {t:'Nie udało się wczytać danych. Odśwież stronę.',e:true};
+  if(st.slow)return {t:st.loaded?'Nie można teraz połączyć się z bazą. Widoczne dane mogą być nieaktualne.':'Nie można teraz połączyć się z bazą. Spróbuj ponownie za chwilę.',e:true};
+  if(!st.loaded)return {t:'Wczytuję dane…',e:false};
+  if(st.note)return {t:st.note,e:st.noteErr};
+  if(!st.uid)return {t:'Przeglądasz jako gość. Żeby dodawać przejazdy, zaloguj się w claude.ai.',e:false};
+  return {t:'',e:false};
+}
+function renderStatus(){
+  var s=statusText(),n=$('status');
+  n.textContent=s.t;n.hidden=!s.t;
+  n.className='status'+(s.e?' err':'');
+}
+
+function podium(id){
+  var b=board(id).slice(0,3);
+  var ol=el('ol',null,'pod');
+  ol.setAttribute('aria-label','Trzech najszybszych kierowców');
+  b.forEach(function(r,i){
+    var li=el('li');
+    li.appendChild(el('span',String(i+1),'pl'));
+    li.appendChild(el('span',nameOf(r.id),'pn'));
+    li.appendChild(el('span',fmt(r.best.ms),'pt'));
+    ol.appendChild(li);
+  });
+  return ol;
+}
+function addrNode(t){
+  var parts=[t.street,t.city].filter(Boolean);
+  var f=document.createDocumentFragment();
+  if(!parts.length){f.appendChild(document.createTextNode('Brak adresu'));return f}
+  parts.forEach(function(p,i){
+    if(i)f.appendChild(document.createElement('br'));
+    f.appendChild(document.createTextNode(p));
+  });
+  return f;
+}
+function renderStrip(){
+  var s=$('strip');
+  if(!st.db||!st.loaded){s.hidden=true;return}
+  var drivers=0,rides=0;
+  st.players.forEach(function(p){var n=(p.rides||[]).length;if(n){drivers++;rides+=n}});
+  s.hidden=false;
+  s.textContent='Tory: '+TRACKS.length+' · Kierowcy: '+drivers+' · Przejazdy: '+rides;
+}
+function renderHome(){
+  renderStrip();
+  var g=$('cards');clear(g);
+  TRACKS.forEach(function(t,i){
+    var a=el('a',null,'card');a.href='#'+t.id;
+    a.appendChild(el('span',String(i+1),'no'));
+    a.appendChild(el('h2',t.name));
+    var ad=el('address',null,'addr');ad.appendChild(addrNode(t));a.appendChild(ad);
+    if(st.db&&st.loaded){
+      var bd=board(t.id);
+      a.appendChild(bd.length?podium(t.id):el('span','Brak przejazdów','rec'));
+      var mi0=bd.map(function(x){return x.id}).indexOf(st.uid);
+      if(mi0>-1)a.appendChild(el('span','Twoje miejsce: '+(mi0+1)+' z '+bd.length,'you'));
+    }
+    a.appendChild(el('span','Zobacz tor','go'));
+    g.appendChild(a);
+  });
+}
+
+function infoRow(dl,k,v){
+  var d=el('div');d.appendChild(el('dt',k));
+  var dd=el('dd');
+  if(typeof v==='string')dd.textContent=v;else dd.appendChild(v);
+  d.appendChild(dd);dl.appendChild(d);
+}
+function kartsFor(t){
+  if(t.karts)return t.karts.slice();
+  var seen={},out=[];
+  st.players.forEach(function(p){ridesOf(p,t.id).forEach(function(r){
+    if(r.kart&&!seen[r.kart]){seen[r.kart]=1;out.push(r.kart)}
+  })});
+  return out.sort();
+}
+function renderKartFilter(t){
+  var box=$('kartFilter');clear(box);
+  var ks=st.db&&st.loaded?kartsFor(t):[];
+  if(ks.length<2){box.hidden=true;st.kart='';return}
+  box.hidden=false;
+  if(st.kart&&ks.indexOf(st.kart)<0)st.kart='';
+  [''].concat(ks).forEach(function(k){
+    var b=el('button',k||'Wszystkie gokarty','fchip');
+    b.type='button';b.setAttribute('aria-pressed',String(k===st.kart));
+    b.onclick=function(){st.kart=k;render()};
+    box.appendChild(b);
+  });
+}
+function renderTiles(b){
+  var box=$('tiles');clear(box);
+  if(!b.length)return;
+  var ol=el('ol',null,'tiles');
+  ol.setAttribute('aria-label','Podium');
+  b.slice(0,3).forEach(function(r,i){
+    var li=el('li',null,'tile t'+(i+1));
+    li.appendChild(el('span',String(i+1),'tp'));
+    li.appendChild(el('span',nameOf(r.id)+(r.id===st.uid?' (ty)':''),'tn'));
+    li.appendChild(el('span',fmt(r.best.ms),'tt'));
+    li.appendChild(el('span',(r.best.kart||'-')+' · '+fmtDate(r.best.date),'td'));
+    ol.appendChild(li);
+  });
+  box.appendChild(ol);
+}
+function renderTrack(t){
+  $('tName').textContent=t.name;
+  var dl=$('tInfo');clear(dl);
+  infoRow(dl,'Adres',addrNode(t));
+  if(t.hours)infoRow(dl,'Godziny otwarcia',t.hours);
+  if(t.phone)infoRow(dl,'Telefon',t.phone);
+  if(t.len)infoRow(dl,'Tor',t.len);
+  if(t.src){
+    var a=el('a',t.src.label);a.href=t.src.url;a.target='_blank';a.rel='noopener';
+    infoRow(dl,'Źródło danych',a);
+  }
+  var mu=mapUrl(t),ml=$('mapLink');
+  ml.hidden=!mu;if(mu)ml.href=mu;
+  var ab=$('addBtn');
+  ab.disabled=!(st.db&&st.loaded&&st.uid);
+  ab.title=st.uid?'':'Zaloguj się w claude.ai, żeby dodawać przejazdy';
+  renderKartFilter(t);
+  renderRank(t.id);
+  renderCmp(t.id);
+  renderHist(t.id);
+}
+
+function renderRank(t){
+  var box=$('rank'),sum=$('summary'),riv=$('rival');
+  clear(box);sum.textContent='';riv.textContent='';clear($('tiles'));
+  if(!st.db||!st.loaded)return;
+  var b=board(t,st.period,st.kart);
+  if(!b.length){box.appendChild(el('p',st.period==='month'?'W tym miesiącu nikt jeszcze nie jechał na tym torze. Dodaj pierwszy przejazd.':'Na tym torze nie ma jeszcze przejazdów. Dodaj pierwszy.','msg'));return}
+  var laps=b.reduce(function(n,x){return n+x.count},0);
+  var line=(st.period==='month'?monthLabel()+' · ':'')+(st.kart?'Gokart '+st.kart+' · ':'')+'Kierowcy: '+b.length+' · Przejazdy: '+laps;
+  if(b.length>TOP)line+=' · Widać '+TOP+' najlepszych';
+  sum.textContent=line;
+  renderTiles(b);
+
+  var mi=b.map(function(x){return x.id}).indexOf(st.uid);
+  if(mi===0){
+    riv.textContent=b.length>1?'Prowadzisz. Przewaga nad miejscem 2: '+((b[1].best.ms-b[0].best.ms)/1000).toFixed(3)+' s.':'Prowadzisz. Na razie jesteś jedynym kierowcą w rankingu.';
+  }else if(mi>0){
+    riv.textContent='Twoje miejsce: '+(mi+1)+' z '+b.length+'. Do miejsca '+mi+' tracisz '+((b[mi].best.ms-b[mi-1].best.ms)/1000).toFixed(3)+' s.';
+  }
+
+  var tb=el('table',null,'tbl');
+  tb.appendChild(el('caption','Ranking toru: '+Math.min(TOP,b.length)+' najlepszych kierowców, najlepszy czas każdego','sr'));
+  var hr=el('tr');
+  [['Miejsce','num'],['Kierowca',''],['Czas','num'],['Strata','num'],['Gokart',''],['Data','']].forEach(function(c){
+    var th=el('th',c[0],c[1]);th.scope='col';hr.appendChild(th);
+  });
+  var thead=el('thead');thead.appendChild(hr);tb.appendChild(thead);
+  var tbody=el('tbody');
+  var who=st.sel||st.uid;
+  function row(r,i,extra){
+    var tr=el('tr',null,(i===0?'top ':'')+(r.id===who?'on ':'')+(extra||''));
+    tr.appendChild(el('td',String(i+1),'num'+(i<3?' p'+(i+1):'')));
+    var td=el('td'),bt=el('button',nameOf(r.id)+(r.id===st.uid?' (ty)':''),'link');
+    bt.type='button';
+    if(r.id===who)bt.setAttribute('aria-current','true');
+    bt.onclick=function(){st.sel=r.id;st.del=null;render()};
+    td.appendChild(bt);tr.appendChild(td);
+    tr.appendChild(el('td',fmt(r.best.ms),'num'));
+    tr.appendChild(el('td',fmtGap(r.best.ms-b[0].best.ms),'num'));
+    tr.appendChild(el('td',r.best.kart||'-'));
+    tr.appendChild(el('td',fmtDate(r.best.date)));
+    tbody.appendChild(tr);
+  }
+  b.slice(0,TOP).forEach(function(r,i){row(r,i)});
+  if(mi>=TOP){
+    var dr=el('tr',null,'dots'),dc=el('td','…');dc.colSpan=6;dc.setAttribute('aria-hidden','true');dr.appendChild(dc);
+    tbody.appendChild(dr);
+    row(b[mi],mi,'mine');
+  }
+  tb.appendChild(tbody);
+  var w=el('div',null,'scroll');w.appendChild(tb);box.appendChild(w);
+}
+
+function driverStats(id,t){
+  var p=playerById(id),rs=p?ridesOf(p,t):[];
+  if(!rs.length)return null;
+  var best=rs.reduce(function(a,b){return b.ms<a.ms?b:a});
+  var last=rs.reduce(function(a,b){return b.date>=a.date?b:a});
+  var sum=rs.reduce(function(a,r){return a+r.ms},0);
+  return {best:best.ms,kart:best.kart||'-',avg:Math.round(sum/rs.length),count:rs.length,last:last.ms};
+}
+
+function renderCmp(t){
+  var sec=$('cmpSec'),out=$('cmpOut'),sum=$('cmpSum');
+  clear(out);sum.textContent='';
+  var b=st.db&&st.loaded?board(t,'all'):[];
+  if(b.length<2){sec.hidden=true;return}
+  sec.hidden=false;
+  var ids=b.map(function(x){return x.id});
+  if(!st.cmpA||ids.indexOf(st.cmpA)<0)st.cmpA=ids.indexOf(st.uid)>-1?st.uid:ids[0];
+  if(!st.cmpB||ids.indexOf(st.cmpB)<0||st.cmpB===st.cmpA)st.cmpB=ids.filter(function(id){return id!==st.cmpA})[0];
+  [['cmpA',st.cmpA],['cmpB',st.cmpB]].forEach(function(x){
+    var sel=$(x[0]);clear(sel);
+    ids.forEach(function(id){
+      var o=document.createElement('option');
+      o.value=id;o.textContent=nameOf(id)+(id===st.uid?' (ty)':'');
+      sel.appendChild(o);
+    });
+    sel.value=x[1];
+  });
+  var A=driverStats(st.cmpA,t),B=driverStats(st.cmpB,t);
+  if(!A||!B)return;
+  var na=nameOf(st.cmpA),nb=nameOf(st.cmpB);
+  if(A.best===B.best)sum.textContent='Remis: oboje mają najlepszy czas '+fmt(A.best)+'.';
+  else if(A.best<B.best)sum.textContent=na+' jest szybszy od '+nb+' o '+((B.best-A.best)/1000).toFixed(3)+' s (najlepsze czasy).';
+  else sum.textContent=nb+' jest szybszy od '+na+' o '+((A.best-B.best)/1000).toFixed(3)+' s (najlepsze czasy).';
+
+  var tb=el('table',null,'tbl');
+  tb.appendChild(el('caption','Porównanie dwóch kierowców na tym torze','sr'));
+  var hr=el('tr');
+  [['Wskaźnik',''],[na,'num'],[nb,'num']].forEach(function(c){
+    var th=el('th',c[0],c[1]);th.scope='col';hr.appendChild(th);
+  });
+  var thead=el('thead');thead.appendChild(hr);tb.appendChild(thead);
+  var tbody=el('tbody');
+  function row(label,va,vb,fa,fb,lowerBetter){
+    var tr=el('tr');
+    tr.appendChild(el('td',label));
+    var win=va===vb?0:((va<vb)===lowerBetter?1:2);
+    [[fa,1],[fb,2]].forEach(function(c){
+      var td=el('td',c[0],'num'+(win===c[1]?' win':''));
+      if(win===c[1])td.appendChild(el('span','lepszy','tag'));
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  row('Najlepszy czas',A.best,B.best,fmt(A.best),fmt(B.best),true);
+  row('Średni czas',A.avg,B.avg,fmt(A.avg),fmt(B.avg),true);
+  row('Ostatni przejazd',A.last,B.last,fmt(A.last),fmt(B.last),true);
+  row('Liczba przejazdów',A.count,B.count,String(A.count),String(B.count),false);
+  var kr=el('tr');kr.appendChild(el('td','Gokart najlepszego czasu'));
+  kr.appendChild(el('td',A.kart,'num'));kr.appendChild(el('td',B.kart,'num'));
+  tbody.appendChild(kr);
+  tb.appendChild(tbody);
+  var w=el('div',null,'scroll');w.appendChild(tb);out.appendChild(w);
+}
+
+function renderStats(base,pb){
+  var box=$('stats');clear(box);
+  var sum=base.reduce(function(a,r){return a+r.ms},0);
+  var last=base.reduce(function(a,b){return b.date>=a.date?b:a});
+  var dl=el('dl',null,'stats');
+  function item(k,v,small){
+    var d=el('div');d.appendChild(el('dt',k));
+    var dd=el('dd',v);if(small)dd.appendChild(el('small',small));
+    d.appendChild(dd);dl.appendChild(d);
+  }
+  item('Przejazdy',String(base.length));
+  item('Najlepszy',fmt(pb));
+  item('Średni',fmt(Math.round(sum/base.length)));
+  item('Ostatni',fmt(last.ms),last.ms===pb?'najlepszy':fmtGap(last.ms-pb));
+  box.appendChild(dl);
+}
+
+function renderChart(base,rec){
+  var box=$('chart');clear(box);
+  if(base.length<2){box.appendChild(el('p','Za mało przejazdów na wykres: potrzeba co najmniej dwóch.','msg'));return}
+  var pts=base.map(function(r,i){return {r:r,i:i}}).sort(function(a,b){
+    return a.r.date<b.r.date?-1:a.r.date>b.r.date?1:a.i-b.i;
+  }).map(function(x){return x.r});
+  var n=pts.length,NS='http://www.w3.org/2000/svg',W=420,H=240,L=58,R=16,T=16,B=34;
+  var ms=pts.map(function(r){return r.ms}),mn=Math.min.apply(null,ms),mx=Math.max.apply(null,ms);
+  var rmn=(rec!=null&&rec<mn)?rec:mn;
+  var steps=[100,200,500,1000,2000,5000,10000,20000,30000,60000],step=60000;
+  for(var k=0;k<steps.length;k++){if((mx-rmn)/steps[k]<=4){step=steps[k];break}}
+  var lo=Math.floor(rmn/step)*step,hi=Math.ceil(mx/step)*step;
+  if(hi===lo)hi=lo+step;
+  function X(i){return L+(i/(n-1))*(W-L-R)}
+  function Y(v){return T+(v-lo)/(hi-lo)*(H-T-B)}
+  function S(tag,attrs,cls,text){
+    var e=document.createElementNS(NS,tag);
+    for(var a in attrs)e.setAttribute(a,attrs[a]);
+    if(cls)e.setAttribute('class',cls);
+    if(text!=null)e.textContent=text;
+    return e;
+  }
+  var cb=el('div',null,'chartbox');
+  cb.appendChild(el('h3','Postęp czasów'));
+  var wrap=el('div',null,'chartwrap');
+  var svg=S('svg',{viewBox:'0 0 '+W+' '+H,role:'img',tabindex:'0',
+    'aria-label':'Wykres czasów w kolejnych przejazdach: od '+fmt(pts[0].ms)+' do '+fmt(pts[n-1].ms)+', najlepszy '+fmt(mn)+'. Dokładne wartości są w tabeli poniżej.'});
+  for(var v=lo;v<=hi;v+=step){
+    svg.appendChild(S('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v)},'ch-grid'));
+    svg.appendChild(S('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},'ch-txt',fmt(v)));
+  }
+  if(rec!=null&&rec<mn){
+    svg.appendChild(S('line',{x1:L,x2:W-R,y1:Y(rec),y2:Y(rec)},'ch-rec'));
+    svg.appendChild(S('text',{x:W-R,y:Y(rec)-6,'text-anchor':'end'},'ch-txt','rekord toru '+fmt(rec)));
+  }
+  var d0=fmtDate(pts[0].date),d1=fmtDate(pts[n-1].date);
+  if(d0===d1){
+    svg.appendChild(S('text',{x:L,y:H-10},'ch-txt',d0));
+  }else{
+    svg.appendChild(S('text',{x:L,y:H-10},'ch-txt',d0));
+    svg.appendChild(S('text',{x:W-R,y:H-10,'text-anchor':'end'},'ch-txt',d1));
+  }
+  svg.appendChild(S('polyline',{points:pts.map(function(r,i){return X(i).toFixed(1)+','+Y(r.ms).toFixed(1)}).join(' ')},'ch-line'));
+  if(n<=60){
+    pts.forEach(function(r,i){svg.appendChild(S('circle',{cx:X(i),cy:Y(r.ms),r:4},'ch-dot'))});
+  }
+  var ib=ms.indexOf(mn);
+  svg.appendChild(S('circle',{cx:X(ib),cy:Y(mn),r:6},'ch-dot'));
+  var right=X(ib)>W/2;
+  svg.appendChild(S('text',{x:X(ib)+(right?-10:10),y:Y(mn)-10,'text-anchor':right?'end':'start'},'ch-txt','najlepszy '+fmt(mn)));
+  var cross=S('line',{y1:T,y2:H-B,visibility:'hidden'},'ch-cross');
+  var act=S('circle',{r:5,visibility:'hidden'},'ch-dot');
+  svg.appendChild(cross);svg.appendChild(act);
+  var hit=S('rect',{x:L,y:T,width:W-L-R,height:H-T-B},'ch-hit');
+  svg.appendChild(hit);
+  var tip=el('div',null,'tip');tip.hidden=true;
+  wrap.appendChild(svg);wrap.appendChild(tip);
+  cb.appendChild(wrap);
+  cb.appendChild(el('p','Wyżej znaczy szybciej. Najedź na wykres albo użyj strzałek, żeby zobaczyć przejazd.','hint'));
+  box.appendChild(cb);
+
+  var cur=-1;
+  function show(i){
+    cur=i;
+    var r=pts[i],rect=svg.getBoundingClientRect(),sx=rect.width/W;
+    cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility','visible');
+    act.setAttribute('cx',X(i));act.setAttribute('cy',Y(r.ms));act.setAttribute('visibility','visible');
+    clear(tip);
+    var big=el('strong');big.appendChild(el('i'));big.appendChild(document.createTextNode(fmt(r.ms)));
+    tip.appendChild(big);
+    tip.appendChild(document.createTextNode(fmtDate(r.date)+' · '+(r.kart||'-')));
+    tip.hidden=false;
+    var px=Math.min(Math.max(X(i)*sx,tip.offsetWidth/2),rect.width-tip.offsetWidth/2);
+    tip.style.left=px+'px';
+    tip.style.top=(Y(r.ms)*sx-12)+'px';
+  }
+  function hide(){
+    cur=-1;tip.hidden=true;
+    cross.setAttribute('visibility','hidden');act.setAttribute('visibility','hidden');
+  }
+  function nearest(e){
+    var rect=svg.getBoundingClientRect(),vx=(e.clientX-rect.left)/rect.width*W;
+    return Math.max(0,Math.min(n-1,Math.round((vx-L)/(W-L-R)*(n-1))));
+  }
+  hit.addEventListener('pointermove',function(e){show(nearest(e))});
+  hit.addEventListener('pointerdown',function(e){show(nearest(e))});
+  hit.addEventListener('pointerleave',hide);
+  svg.addEventListener('focus',function(){show(n-1)});
+  svg.addEventListener('blur',hide);
+  svg.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft'){e.preventDefault();show(Math.max(0,(cur<0?n-1:cur)-1))}
+    else if(e.key==='ArrowRight'){e.preventDefault();show(Math.min(n-1,(cur<0?n-1:cur)+1))}
+    else if(e.key==='Escape'){hide()}
+  });
+}
+
+function renderHist(t){
+  var sec=$('histSec'),box=$('hist');clear(box);clear($('stats'));clear($('chart'));
+  var who=st.sel||st.uid;
+  if(!st.db||!st.loaded||!who){sec.hidden=true;return}
+  sec.hidden=false;
+  $('hTitle').textContent=who===st.uid?'Twoje przejazdy':'Przejazdy: '+nameOf(who);
+  var p=playerById(who),base=p?ridesOf(p,t):[];
+  if(!base.length){
+    box.appendChild(el('p',who===st.uid?'Nie masz jeszcze przejazdów na tym torze.':'Brak przejazdów na tym torze.','msg'));
+    return;
+  }
+  var rs=base.slice();
+  rs.sort(function(x,y){return x.date<y.date?1:x.date>y.date?-1:x.ms-y.ms});
+  var pb=Math.min.apply(null,base.map(function(r){return r.ms}));
+  renderStats(base,pb);
+  var rb=board(t,'all')[0];
+  renderChart(base,rb?rb.best.ms:null);
+  var canDel=who===st.uid||st.isOwner;
+  var tb=el('table',null,'tbl');
+  tb.appendChild(el('caption','Historia przejazdów','sr'));
+  var hr=el('tr');
+  ['Data','Gokart','Czas'].concat(canDel?['']:[]).forEach(function(c,i){
+    var th=el('th',c||null,i===2?'num':'');th.scope='col';
+    if(!c){th.appendChild(el('span','Akcje','sr'))}
+    hr.appendChild(th);
+  });
+  var thead=el('thead');thead.appendChild(hr);tb.appendChild(thead);
+  var tbody=el('tbody');
+  rs.forEach(function(r){
+    var tr=el('tr');
+    tr.appendChild(el('td',fmtDate(r.date)));
+    tr.appendChild(el('td',r.kart||'-'));
+    var tc=el('td',fmt(r.ms),'num');
+    if(r.ms===pb)tc.appendChild(el('span','najlepszy','tag'));
+    tr.appendChild(tc);
+    if(canDel){
+      var ac=el('td');
+      if(st.del===r.id){
+        ac.appendChild(el('span','Na pewno? '));
+        var y=el('button','Usuń','link');y.type='button';
+        y.onclick=function(){removeRide(who,r.id)};
+        var n=el('button','Anuluj','link');n.type='button';n.style.marginLeft='10px';
+        n.onclick=function(){st.del=null;render()};
+        ac.appendChild(y);ac.appendChild(n);
+      }else{
+        var d=el('button','Usuń','link');d.type='button';
+        d.setAttribute('aria-label','Usuń przejazd '+fmtDate(r.date)+', '+fmt(r.ms));
+        d.onclick=function(){st.del=r.id;render()};
+        ac.appendChild(d);
+      }
+      tr.appendChild(ac);
+    }
+    tbody.appendChild(tr);
+  });
+  tb.appendChild(tbody);
+  var w=el('div',null,'scroll');w.appendChild(tb);box.appendChild(w);
+}
+
+function render(){
+  renderBar();renderStatus();
+  var t=trackById(st.track);
+  $('home').hidden=!!t;$('track').hidden=!t;
+  if(t)renderTrack(t);else renderHome();
+}
+
+/* ---------- przejazdy ---------- */
+function kartInputs(){return document.querySelector('input[name="kart"]')}
+function openRide(){
+  if(!st.db||!st.uid||!trackById(st.track))return;
+  var mine=playerById(st.uid),rs=mine?ridesOf(mine,st.track):[];
+  var kl=$('kartList');clear(kl);
+  var seen={};
+  st.players.forEach(function(p){ridesOf(p,st.track).forEach(function(r){
+    if(r.kart&&!seen[r.kart]){seen[r.kart]=1;var o=document.createElement('option');o.value=r.kart;kl.appendChild(o)}
+  })});
+  var last=rs.slice().sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0})[0];
+  var tk=trackById(st.track),ks=tk&&tk.karts;
+  $('rKartSet').hidden=!ks;$('rKartL').hidden=!!ks;
+  if(ks){
+    var box=$('rChips');clear(box);
+    ks.forEach(function(k,i){
+      var w=el('span',null,'kc'),id='kart-'+i;
+      var r=document.createElement('input');
+      r.type='radio';r.name='kart';r.id=id;r.value=k;
+      if(last&&last.kart===k)r.checked=true;
+      var l=el('label',k);l.htmlFor=id;
+      w.appendChild(r);w.appendChild(l);box.appendChild(w);
+    });
+  }
+  $('rKart').value=last&&last.kart?last.kart:'';
+  $('rTime').value='';
+  $('rDate').value=todayISO();$('rDate').max=todayISO();
+  $('rErr').textContent='';$('rOk').textContent='';
+  $('dlgRide').showModal();
+  var haveKart=ks?!!document.querySelector('input[name="kart"]:checked'):!!$('rKart').value;
+  (haveKart?$('rTime'):(ks?kartInputs():$('rKart'))).focus();
+}
+
+async function saveRide(e){
+  e.preventDefault();
+  if(st.busy)return;
+  var more=!!(e.submitter&&e.submitter.id==='rSaveMore');
+  var tk=trackById(st.track),ks=tk&&tk.karts,er=$('rErr');
+  $('rOk').textContent='';
+  var kart;
+  if(ks){var c=document.querySelector('input[name="kart"]:checked');kart=c?c.value:''}
+  else kart=$('rKart').value.trim().replace(/\s+/g,' ').slice(0,40);
+  var ms=parseTime($('rTime').value),date=$('rDate').value;
+  if(!st.uid||!st.db){er.textContent='Zaloguj się w claude.ai, żeby dodać przejazd.';return}
+  if(!kart){er.textContent=ks?'Wybierz gokart.':'Podaj gokart, np. model lub numer.';(ks?kartInputs():$('rKart')).focus();return}
+  if(ms===null){er.textContent='Wpisz czas w formacie 1:02.345, 1.02.345 albo 58.4.';$('rTime').focus();return}
+  if(ms<MIN_MS||ms>MAX_MS){er.textContent='Czas musi mieścić się między 0:15 a 10:00.';$('rTime').focus();return}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayISO()){er.textContent='Wybierz datę, nie późniejszą niż dzisiaj.';$('rDate').focus();return}
+  er.textContent='';
+  var btn=more?$('rSaveMore'):$('rSave'),label=btn.textContent;
+  st.busy=true;$('rSave').disabled=true;$('rSaveMore').disabled=true;btn.textContent='Zapisuję…';
+  try{
+    var ref=st.db.doc('players/'+st.uid),snap=await ref.get();
+    var rides=snap.exists&&Array.isArray(snap.data().rides)?snap.data().rides.slice():[];
+    if(rides.length>=MAX_RIDES)throw new Error('Osiągnięto limit '+MAX_RIDES+' przejazdów. Usuń stare, żeby dodać nowe.');
+    rides.push({id:newId(),track:st.track,date:date,kart:kart,ms:ms});
+    await ref.set({rides:rides});
+    st.sel=st.uid;st.del=null;
+    if(more){
+      $('rTime').value='';
+      $('rOk').textContent='Zapisano '+fmt(ms)+'. Wpisz kolejny czas.';
+      $('rTime').focus();
+    }else{
+      $('dlgRide').close();
+      flash('Zapisano przejazd: '+fmt(ms));
+    }
+  }catch(err){
+    er.textContent=errText(err);
+  }finally{
+    st.busy=false;$('rSave').disabled=false;$('rSaveMore').disabled=false;btn.textContent=label;
+    render();
+  }
+}
+
+async function removeRide(pid,rid){
+  if(st.busy)return;
+  st.busy=true;
+  try{
+    var ref=st.db.doc('players/'+pid),snap=await ref.get();
+    if(snap.exists){
+      var rides=(Array.isArray(snap.data().rides)?snap.data().rides:[]).filter(function(r){return r.id!==rid});
+      await ref.set({rides:rides});
+    }
+    st.del=null;
+    flash('Przejazd usunięty.');
+  }catch(err){
+    st.del=null;setNote(errText(err),true);
+  }finally{
+    st.busy=false;render();
+  }
+}
+
+/* ---------- trasy ---------- */
+function route(){
+  st.track=(location.hash||'').replace('#','');
+  st.sel=null;st.del=null;st.kart='';st.cmpA=null;st.cmpB=null;
+  window.scrollTo(0,0);
+  render();
+}
+
+/* ---------- dane ---------- */
+function resolveNames(ids){
+  if(!st.user||!ids.length)return Promise.resolve(false);
+  return st.user.profiles(ids).then(function(ps){
+    var changed=false;
+    ids.forEach(function(id){
+      var n=(ps[id]&&ps[id].name)||'';
+      if(st.names[id]!==n){st.names[id]=n;changed=true}
+    });
+    return changed;
+  },function(){return false});
+}
+
+function subscribe(){
+  var timer=setTimeout(function(){st.slow=true;render()},10000);
+  st.db.collection('players').onSnapshot(function(s){
+    st.loaded=true;
+    if(!s.metadata.fromCache){clearTimeout(timer);st.slow=false}
+    st.players=s.docs.map(function(d){
+      var v=d.data()||{};
+      return {id:d.id,rides:Array.isArray(v.rides)?v.rides:[]};
+    });
+    render();
+    resolveNames(st.players.map(function(p){return p.id})).then(function(ch){if(ch)render()});
+  },function(){
+    clearTimeout(timer);st.fail=true;render();
+  });
+}
+
+async function init(){
+  if(!(window.claude&&window.claude.use)){st.ready=true;render();return}
+  try{
+    var u=await claude.use('user');
+    if(u){
+      st.user=u;
+      var me=await u.me();
+      st.uid=me.id;st.myName=me.name||'';st.avatar=me.avatarUrl||'';
+      st.isOwner=me.isOwner;
+    }
+    var d=await claude.use('db');
+    st.ready=true;
+    if(!d){render();return}
+    st.db=d;
+    render();
+    subscribe();
+  }catch(e){
+    st.ready=true;st.fail=true;render();
+  }
+}
+
+function setPeriod(per){
+  st.period=per;
+  $('perAll').setAttribute('aria-pressed',per==='all');
+  $('perMonth').setAttribute('aria-pressed',per==='month');
+  render();
+}
+
+/* ---------- start ---------- */
+$('addBtn').addEventListener('click',openRide);
+$('perAll').addEventListener('click',function(){setPeriod('all')});
+$('perMonth').addEventListener('click',function(){setPeriod('month')});
+$('cmpA').addEventListener('change',function(){
+  var old=st.cmpA;st.cmpA=this.value;
+  if(st.cmpB===st.cmpA)st.cmpB=old;
+  renderCmp(st.track);
+});
+$('cmpB').addEventListener('change',function(){
+  var old=st.cmpB;st.cmpB=this.value;
+  if(st.cmpA===st.cmpB)st.cmpA=old;
+  renderCmp(st.track);
+});
+$('rideForm').addEventListener('submit',saveRide);
+$('rCancel').addEventListener('click',function(){$('dlgRide').close()});
+window.addEventListener('hashchange',route);
+route();
+init();
+})();
+</script>
+
+</body></html>
