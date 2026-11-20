@@ -1,9 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Tory gokartowe</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&display=swap" rel="stylesheet">
 <style>
-/* Układ: pasy krawężnika u góry i na dole, lista torów jako karty, strona toru z rankingiem 20 najlepszych i historią przejazdów. */
 :root{
   --bg:#e7e6e1; --surface:#f6f5f1; --ink:#23262b; --muted:#5d626a;
   --red:#d3302a; --on-red:#fff; --line:#c9c8c1; --err:#b3241f; --stripe:#fff;
@@ -153,6 +151,8 @@ footer{padding:20px 0 36px;color:var(--muted);font-size:.9rem}
   <div class="bar">
     <a class="brand" href="#">Gokarty</a>
     <div class="who" id="who" hidden></div>
+    <button type="button" class="btn" id="loginBtn" hidden>Zaloguj przez Google</button>
+    <button type="button" class="btn ghost" id="logoutBtn" hidden>Wyloguj</button>
   </div>
   <p class="status" id="status" role="status" hidden></p>
 
@@ -236,9 +236,30 @@ footer{padding:20px 0 36px;color:var(--muted);font-size:.9rem}
 <div class="kerb" aria-hidden="true"></div>
 <div class="wrap"><footer>Tory gokartowe</footer></div>
 
+<!-- Skrypty Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
 (function(){
 'use strict';
+
+// ----------------------------------------------------
+// KONFIGURACJA FIREBASE (Wklej tutaj dane ze swojego projektu)
+// ----------------------------------------------------
+var firebaseConfig = {
+  apiKey: "TUTAJ_API_KEY",
+  authDomain: "TUTAJ_PROJECT_ID.firebaseapp.com",
+  projectId: "TUTAJ_PROJECT_ID",
+  storageBucket: "TUTAJ_PROJECT_ID.appspot.com",
+  messagingSenderId: "TUTAJ_MESSAGING_SENDER_ID",
+  appId: "TUTAJ_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
 
 var TRACKS=[{
   id:'tor-1',
@@ -263,13 +284,12 @@ var TOP=20, MIN_MS=15000, MAX_MS=600000, MAX_RIDES=1500;
 
 var $=function(i){return document.getElementById(i)};
 var st={
-  db:null,user:null,ready:false,loaded:false,slow:false,fail:false,
+  db:db,user:null,ready:true,loaded:false,slow:false,fail:false,
   uid:null,myName:'',avatar:'',isOwner:false,
   players:[],names:{},track:'',sel:null,del:null,busy:false,
   note:'',noteErr:false,period:'all',kart:'',cmpA:null,cmpB:null
 };
 
-/* ---------- pomocnicze ---------- */
 function el(tag,text,cls){var e=document.createElement(tag);if(text!=null&&text!=='')e.textContent=text;if(cls)e.className=cls;return e}
 function clear(n){n.textContent=''}
 function trackById(id){return TRACKS.filter(function(t){return t.id===id})[0]||null}
@@ -311,7 +331,6 @@ function nameOf(id){
   if(id===st.uid&&st.myName)return st.myName;
   return st.names[id]||'Kierowca';
 }
-/* najlepszy czas każdego kierowcy na torze, od najszybszego */
 function board(t,per,kart){
   var out=[];
   st.players.forEach(function(p){
@@ -329,30 +348,32 @@ function flash(msg){
   setTimeout(function(){if(st.note===msg&&!st.noteErr)setNote('')},4000);
 }
 function errText(e){
-  if(e&&e.code==='invalid_argument')return 'Nie masz uprawnień do zapisu. Poproś właściciela strony o odpowiednią rolę.';
-  if(e&&e.code==='quota_exceeded')return 'Baza jest pełna. Usuń część danych i spróbuj ponownie.';
-  if(e&&e.code==='unavailable')return 'Baza jest chwilowo niedostępna. Spróbuj za chwilę.';
   return (e&&e.message)?e.message:'Nie udało się zapisać. Spróbuj ponownie.';
 }
 
-/* ---------- widoki ---------- */
 function renderBar(){
-  var w=$('who');clear(w);
-  if(!st.uid){w.hidden=true;return}
+  var w=$('who'),lBtn=$('loginBtn'),oBtn=$('logoutBtn');
+  clear(w);
+  if(!st.uid){
+    w.hidden=true;
+    lBtn.hidden=false;
+    oBtn.hidden=true;
+    return;
+  }
+  lBtn.hidden=true;
+  oBtn.hidden=false;
   w.hidden=false;
-  var img=document.createElement('img');img.className='avatar';img.alt='';img.src=st.avatar;
+  var img=document.createElement('img');img.className='avatar';img.alt='';img.src=st.avatar||'';
   w.appendChild(img);
   w.appendChild(el('span',st.myName||'Kierowca'));
 }
 
 function statusText(){
   if(!st.ready)return {t:'Wczytuję…',e:false};
-  if(!st.db)return {t:'Dane są niedostępne. Otwórz stronę po zalogowaniu w claude.ai i odśwież ją.',e:true};
   if(st.fail)return {t:'Nie udało się wczytać danych. Odśwież stronę.',e:true};
-  if(st.slow)return {t:st.loaded?'Nie można teraz połączyć się z bazą. Widoczne dane mogą być nieaktualne.':'Nie można teraz połączyć się z bazą. Spróbuj ponownie za chwilę.',e:true};
   if(!st.loaded)return {t:'Wczytuję dane…',e:false};
   if(st.note)return {t:st.note,e:st.noteErr};
-  if(!st.uid)return {t:'Przeglądasz jako gość. Żeby dodawać przejazdy, zaloguj się w claude.ai.',e:false};
+  if(!st.uid)return {t:'Przeglądasz jako gość. Zaloguj się przez Google, aby dodawać przejazdy.',e:false};
   return {t:'',e:false};
 }
 function renderStatus(){
@@ -386,7 +407,7 @@ function addrNode(t){
 }
 function renderStrip(){
   var s=$('strip');
-  if(!st.db||!st.loaded){s.hidden=true;return}
+  if(!st.loaded){s.hidden=true;return}
   var drivers=0,rides=0;
   st.players.forEach(function(p){var n=(p.rides||[]).length;if(n){drivers++;rides+=n}});
   s.hidden=false;
@@ -400,7 +421,7 @@ function renderHome(){
     a.appendChild(el('span',String(i+1),'no'));
     a.appendChild(el('h2',t.name));
     var ad=el('address',null,'addr');ad.appendChild(addrNode(t));a.appendChild(ad);
-    if(st.db&&st.loaded){
+    if(st.loaded){
       var bd=board(t.id);
       a.appendChild(bd.length?podium(t.id):el('span','Brak przejazdów','rec'));
       var mi0=bd.map(function(x){return x.id}).indexOf(st.uid);
@@ -427,7 +448,7 @@ function kartsFor(t){
 }
 function renderKartFilter(t){
   var box=$('kartFilter');clear(box);
-  var ks=st.db&&st.loaded?kartsFor(t):[];
+  var ks=st.loaded?kartsFor(t):[];
   if(ks.length<2){box.hidden=true;st.kart='';return}
   box.hidden=false;
   if(st.kart&&ks.indexOf(st.kart)<0)st.kart='';
@@ -467,8 +488,8 @@ function renderTrack(t){
   var mu=mapUrl(t),ml=$('mapLink');
   ml.hidden=!mu;if(mu)ml.href=mu;
   var ab=$('addBtn');
-  ab.disabled=!(st.db&&st.loaded&&st.uid);
-  ab.title=st.uid?'':'Zaloguj się w claude.ai, żeby dodawać przejazdy';
+  ab.disabled=!(st.loaded&&st.uid);
+  ab.title=st.uid?'':'Zaloguj się przez Google, aby dodawać przejazdy';
   renderKartFilter(t);
   renderRank(t.id);
   renderCmp(t.id);
@@ -478,7 +499,7 @@ function renderTrack(t){
 function renderRank(t){
   var box=$('rank'),sum=$('summary'),riv=$('rival');
   clear(box);sum.textContent='';riv.textContent='';clear($('tiles'));
-  if(!st.db||!st.loaded)return;
+  if(!st.loaded)return;
   var b=board(t,st.period,st.kart);
   if(!b.length){box.appendChild(el('p',st.period==='month'?'W tym miesiącu nikt jeszcze nie jechał na tym torze. Dodaj pierwszy przejazd.':'Na tym torze nie ma jeszcze przejazdów. Dodaj pierwszy.','msg'));return}
   var laps=b.reduce(function(n,x){return n+x.count},0);
@@ -539,7 +560,7 @@ function driverStats(id,t){
 function renderCmp(t){
   var sec=$('cmpSec'),out=$('cmpOut'),sum=$('cmpSum');
   clear(out);sum.textContent='';
-  var b=st.db&&st.loaded?board(t,'all'):[];
+  var b=st.loaded?board(t,'all'):[];
   if(b.length<2){sec.hidden=true;return}
   sec.hidden=false;
   var ids=b.map(function(x){return x.id});
@@ -707,7 +728,7 @@ function renderChart(base,rec){
 function renderHist(t){
   var sec=$('histSec'),box=$('hist');clear(box);clear($('stats'));clear($('chart'));
   var who=st.sel||st.uid;
-  if(!st.db||!st.loaded||!who){sec.hidden=true;return}
+  if(!st.loaded||!who){sec.hidden=true;return}
   sec.hidden=false;
   $('hTitle').textContent=who===st.uid?'Twoje przejazdy':'Przejazdy: '+nameOf(who);
   var p=playerById(who),base=p?ridesOf(p,t):[];
@@ -721,7 +742,7 @@ function renderHist(t){
   renderStats(base,pb);
   var rb=board(t,'all')[0];
   renderChart(base,rb?rb.best.ms:null);
-  var canDel=who===st.uid||st.isOwner;
+  var canDel=(who===st.uid||st.isOwner);
   var tb=el('table',null,'tbl');
   tb.appendChild(el('caption','Historia przejazdów','sr'));
   var hr=el('tr');
@@ -769,10 +790,9 @@ function render(){
   if(t)renderTrack(t);else renderHome();
 }
 
-/* ---------- przejazdy ---------- */
 function kartInputs(){return document.querySelector('input[name="kart"]')}
 function openRide(){
-  if(!st.db||!st.uid||!trackById(st.track))return;
+  if(!st.uid||!trackById(st.track))return;
   var mine=playerById(st.uid),rs=mine?ridesOf(mine,st.track):[];
   var kl=$('kartList');clear(kl);
   var seen={};
@@ -812,7 +832,7 @@ async function saveRide(e){
   if(ks){var c=document.querySelector('input[name="kart"]:checked');kart=c?c.value:''}
   else kart=$('rKart').value.trim().replace(/\s+/g,' ').slice(0,40);
   var ms=parseTime($('rTime').value),date=$('rDate').value;
-  if(!st.uid||!st.db){er.textContent='Zaloguj się w claude.ai, żeby dodać przejazd.';return}
+  if(!st.uid){er.textContent='Zaloguj się przez Google, aby dodać przejazd.';return}
   if(!kart){er.textContent=ks?'Wybierz gokart.':'Podaj gokart, np. model lub numer.';(ks?kartInputs():$('rKart')).focus();return}
   if(ms===null){er.textContent='Wpisz czas w formacie 1:02.345, 1.02.345 albo 58.4.';$('rTime').focus();return}
   if(ms<MIN_MS||ms>MAX_MS){er.textContent='Czas musi mieścić się między 0:15 a 10:00.';$('rTime').focus();return}
@@ -821,11 +841,12 @@ async function saveRide(e){
   var btn=more?$('rSaveMore'):$('rSave'),label=btn.textContent;
   st.busy=true;$('rSave').disabled=true;$('rSaveMore').disabled=true;btn.textContent='Zapisuję…';
   try{
-    var ref=st.db.doc('players/'+st.uid),snap=await ref.get();
+    var ref=db.collection('players').doc(st.uid);
+    var snap=await ref.get();
     var rides=snap.exists&&Array.isArray(snap.data().rides)?snap.data().rides.slice():[];
     if(rides.length>=MAX_RIDES)throw new Error('Osiągnięto limit '+MAX_RIDES+' przejazdów. Usuń stare, żeby dodać nowe.');
     rides.push({id:newId(),track:st.track,date:date,kart:kart,ms:ms});
-    await ref.set({rides:rides});
+    await ref.set({rides:rides}, {merge:true});
     st.sel=st.uid;st.del=null;
     if(more){
       $('rTime').value='';
@@ -847,10 +868,11 @@ async function removeRide(pid,rid){
   if(st.busy)return;
   st.busy=true;
   try{
-    var ref=st.db.doc('players/'+pid),snap=await ref.get();
+    var ref=db.collection('players').doc(pid);
+    var snap=await ref.get();
     if(snap.exists){
       var rides=(Array.isArray(snap.data().rides)?snap.data().rides:[]).filter(function(r){return r.id!==rid});
-      await ref.set({rides:rides});
+      await ref.set({rides:rides}, {merge:true});
     }
     st.del=null;
     flash('Przejazd usunięty.');
@@ -861,7 +883,6 @@ async function removeRide(pid,rid){
   }
 }
 
-/* ---------- trasy ---------- */
 function route(){
   st.track=(location.hash||'').replace('#','');
   st.sel=null;st.del=null;st.kart='';st.cmpA=null;st.cmpB=null;
@@ -869,55 +890,46 @@ function route(){
   render();
 }
 
-/* ---------- dane ---------- */
-function resolveNames(ids){
-  if(!st.user||!ids.length)return Promise.resolve(false);
-  return st.user.profiles(ids).then(function(ps){
-    var changed=false;
-    ids.forEach(function(id){
-      var n=(ps[id]&&ps[id].name)||'';
-      if(st.names[id]!==n){st.names[id]=n;changed=true}
-    });
-    return changed;
-  },function(){return false});
-}
-
-function subscribe(){
-  var timer=setTimeout(function(){st.slow=true;render()},10000);
-  st.db.collection('players').onSnapshot(function(s){
-    st.loaded=true;
-    if(!s.metadata.fromCache){clearTimeout(timer);st.slow=false}
-    st.players=s.docs.map(function(d){
-      var v=d.data()||{};
-      return {id:d.id,rides:Array.isArray(v.rides)?v.rides:[]};
-    });
-    render();
-    resolveNames(st.players.map(function(p){return p.id})).then(function(ch){if(ch)render()});
-  },function(){
-    clearTimeout(timer);st.fail=true;render();
+// Logowanie przez Google
+$('loginBtn').addEventListener('click', function(){
+  var provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(function(error){
+    setNote('Błąd logowania: ' + error.message, true);
   });
-}
+});
 
-async function init(){
-  if(!(window.claude&&window.claude.use)){st.ready=true;render();return}
-  try{
-    var u=await claude.use('user');
-    if(u){
-      st.user=u;
-      var me=await u.me();
-      st.uid=me.id;st.myName=me.name||'';st.avatar=me.avatarUrl||'';
-      st.isOwner=me.isOwner;
-    }
-    var d=await claude.use('db');
-    st.ready=true;
-    if(!d){render();return}
-    st.db=d;
-    render();
-    subscribe();
-  }catch(e){
-    st.ready=true;st.fail=true;render();
+$('logoutBtn').addEventListener('click', function(){
+  auth.signOut();
+});
+
+// Nasłuchiwanie stanu autoryzacji Firebase
+auth.onAuthStateChanged(function(user){
+  if(user){
+    st.uid = user.uid;
+    st.myName = user.displayName || 'Kierowca';
+    st.avatar = user.photoURL || '';
+    st.isOwner = false; // Możesz dostosować logikę właściciela jeśli potrzebujesz
+  } else {
+    st.uid = null;
+    st.myName = '';
+    st.avatar = '';
+    st.isOwner = false;
   }
-}
+  render();
+});
+
+// Nasłuchiwanie bazy danych Firestore
+db.collection('players').onSnapshot(function(s){
+  st.loaded = true;
+  st.players = s.docs.map(function(d){
+    var v=d.data()||{};
+    return {id:d.id,rides:Array.isArray(v.rides)?v.rides:[]};
+  });
+  render();
+},function(error){
+  st.fail = true;
+  render();
+});
 
 function setPeriod(per){
   st.period=per;
@@ -926,7 +938,6 @@ function setPeriod(per){
   render();
 }
 
-/* ---------- start ---------- */
 $('addBtn').addEventListener('click',openRide);
 $('perAll').addEventListener('click',function(){setPeriod('all')});
 $('perMonth').addEventListener('click',function(){setPeriod('month')});
@@ -944,7 +955,7 @@ $('rideForm').addEventListener('submit',saveRide);
 $('rCancel').addEventListener('click',function(){$('dlgRide').close()});
 window.addEventListener('hashchange',route);
 route();
-init();
+
 })();
 </script>
 
